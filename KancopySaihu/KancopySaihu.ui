@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>KancopySaihuClass</class>
+ <widget class="QMainWindow" name="KancopySaihuClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>377</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>KancopySaihu - 設定</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>音声ファイル:</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="lineFileName"/>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnRef">
+      <property name="text">
+       <string>参照</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnRecord">
+      <property name="text">
+       <string>録音</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="statusTip">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>600</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="KancopySaihu.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>btnRef</sender>
+   <signal>clicked()</signal>
+   <receiver>KancopySaihuClass</receiver>
+   <slot>fileReference()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>469</x>
+     <y>192</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>465</x>
+     <y>156</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btnRecord</sender>
+   <signal>clicked()</signal>
+   <receiver>KancopySaihuClass</receiver>
+   <slot>showRecord()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>557</x>
+     <y>193</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>553</x>
+     <y>180</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>fileReference()</slot>
+  <slot>showRecord()</slot>
+ </slots>
+</ui>
