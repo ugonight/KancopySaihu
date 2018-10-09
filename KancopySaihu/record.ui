@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>523</width>
-    <height>378</height>
+    <width>512</width>
+    <height>376</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -59,6 +59,19 @@
      </property>
     </widget>
    </item>
+   <item row="3" column="2">
+    <widget class="QPushButton" name="pushButton_3">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>50</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>表示変更(&amp;C)</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
@@ -71,8 +84,8 @@
    <slot>fileReference()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>474</x>
-     <y>34</y>
+     <x>502</x>
+     <y>31</y>
     </hint>
     <hint type="destinationlabel">
      <x>477</x>
@@ -80,8 +93,25 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushButton_3</sender>
+   <signal>clicked()</signal>
+   <receiver>record</receiver>
+   <slot>changeDispMode()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>464</x>
+     <y>331</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>470</x>
+     <y>372</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>fileReference()</slot>
+  <slot>changeDispMode()</slot>
  </slots>
 </ui>

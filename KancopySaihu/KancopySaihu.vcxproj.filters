@@ -40,6 +40,9 @@
     <ClCompile Include="record.cpp">
       <Filter>Source\window</Filter>
     </ClCompile>
+    <ClCompile Include="wave.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="KancopySaihu.h">
@@ -64,6 +67,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Control.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="wave.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="define.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
