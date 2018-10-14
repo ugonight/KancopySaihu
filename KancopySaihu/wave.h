@@ -33,8 +33,8 @@ public:
 	waveRW();
 	~waveRW();
 
-	void wave_read(char *file_name);
-	void wave_write(char *file_name);
+	void wave_read(const char *file_name);
+	void wave_write(const char *file_name);
 
 
 	// ’lŽæ“¾

@@ -32,10 +32,12 @@ private:
 	static std::vector<float> mWaveData;
 
 	int mDispMode;
+	static bool mRecNow;
 protected:
 	void paintEvent(QPaintEvent *);
 
 private slots:
 	void fileReference();	// ファイル保存ダイアログを開く
 	void changeDispMode();	// 表示変更
+	void rec();				// 録音ボタンが押された
 };

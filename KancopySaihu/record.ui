@@ -41,7 +41,7 @@
     </widget>
    </item>
    <item row="3" column="0" colspan="2">
-    <widget class="QPushButton" name="pushButton_2">
+    <widget class="QPushButton" name="recButton">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -60,7 +60,7 @@
     </widget>
    </item>
    <item row="3" column="2">
-    <widget class="QPushButton" name="pushButton_3">
+    <widget class="QPushButton" name="changeButton">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -94,7 +94,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_3</sender>
+   <sender>changeButton</sender>
    <signal>clicked()</signal>
    <receiver>record</receiver>
    <slot>changeDispMode()</slot>
@@ -109,9 +109,26 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>recButton</sender>
+   <signal>clicked()</signal>
+   <receiver>record</receiver>
+   <slot>rec()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>236</x>
+     <y>330</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>235</x>
+     <y>368</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>fileReference()</slot>
   <slot>changeDispMode()</slot>
+  <slot>rec()</slot>
  </slots>
 </ui>

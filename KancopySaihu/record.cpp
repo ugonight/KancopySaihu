@@ -2,12 +2,14 @@
 
 #include "record.h"
 #include "define.h"
+#include "wave.h"
 
 #include <QDir>
 #include <QtWidgets>
 
 std::vector<float> Record::mRecData;
 std::vector<float> Record::mWaveData;
+bool Record::mRecNow = false;
 
 Record::Record(QWidget *parent)
 	: QWidget(parent), mDispMode(0)
@@ -160,6 +162,40 @@ void Record::changeDispMode() {
 	mDispMode %= 2;
 }
 
+void Record::rec() {
+	if (mRecNow) {	
+		// 録音終了
+		mRecNow = false;
+		ui.recButton->setText(tr("録音(&R)"));
+
+		// wave書き込み
+		auto waverw = new waveRW();
+		waverw->setSamplesPerSec(Fs);
+		waverw->setDataChunkSize(mRecData.size() * 2);
+		waverw->setLength(mRecData.size());
+		waverw->setBitsPerSample(16);
+		waverw->setBlockSize(16/8);
+		waverw->setBytesPerSec(waverw->getBlockSize() * Fs);
+		waverw->setRiffChunkSize(36 + waverw->getDataChunkSize());
+		double *data = new double[mRecData.size()];
+		long long int i=0;
+		for (auto d : mRecData) {
+			data[i] = d;
+			i++;
+		}
+		waverw->setData(data);
+		waverw->wave_write(ui.lineFileName->text().toLocal8Bit().constData());
+		delete waverw;
+		
+		mRecData.clear();
+	}
+	else {
+		// 録音開始
+		mRecNow = true;
+		ui.recButton->setText(tr("停止(&S)"));
+	}
+}
+
 int Record::dsp(const void *inputBuffer, //入力
 	void *outputBuffer, //出力
 	unsigned long framesPerBuffer,
@@ -184,7 +220,9 @@ int Record::dsp(const void *inputBuffer, //入力
 		data[i][0] = *in++;
 		data[i][1] = 0;
 
-		mWaveData.push_back(data[i][0]);
+		mWaveData.push_back(data[i][0]); 
+		if (mRecNow) 
+			mRecData.push_back(data[i][0]);
 	}
 
 	memcpy((fftw_complex*)userData, data, sizeof(fftw_complex) * FRAMES_PER_BUFFER);

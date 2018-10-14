@@ -33,6 +33,8 @@ waveRW::waveRW() {
 	data_chunk_ID[2] = 't';
 	data_chunk_ID[3] = 'a';
 	//data_chunk_size = pcm->length * 2;
+
+	s = sL = sR = 0;	// ぬるぽ
 }
 
 waveRW::~waveRW() {
@@ -41,7 +43,7 @@ waveRW::~waveRW() {
 	delete[] sR;
 }
 
-void waveRW::wave_read(char *file_name) {
+void waveRW::wave_read(const char *file_name) {
 	int n;
 	short data;
 
@@ -96,7 +98,7 @@ void waveRW::wave_read(char *file_name) {
 	fin.close();
 }
 
-void waveRW::wave_write(char *file_name) {
+void waveRW::wave_write(const char *file_name) {
 	FILE *fp;
 
 	fopen_s(&fp, file_name, "wb");
@@ -115,32 +117,33 @@ void waveRW::wave_write(char *file_name) {
 	fwrite(data_chunk_ID, 1, 4, fp);
 	fwrite(&data_chunk_size, 4, 1, fp);
 
-	double ss, ssL,ssR, ampl = (bits_per_sample == 8) ? 256.0 : 65536.0;
+	double ss, ssL, ssR, ampl = (bits_per_sample == 8) ? 256.0 : 65536.0;
 	short data;
-	
+
 	if (channel == 1) {
 
 		for (int n = 0; n < length; n++)
 		{
 			ss = (s[n] + 1.0) / 2.0 * ampl;
 
+			
 			if (ss > ampl - 1.0)
 			{
-				ss = ampl - 1.0; /* クリッピング */
+				ss = ampl - 1.0; // クリッピング
 			}
 			else if (ss < 0.0)
 			{
-				ss = 0.0; /* クリッピング */
+				ss = 0.0; // クリッピング 
 			}
 
 			if (bits_per_sample == 8) {
-				data = (short)((int)(ss + 0.5)); /* 四捨五入 */
+				data = (short)((int)(ss + 0.5)); // 四捨五入 
 
 			}
 			else {
-				data = (short)((int)(ss + 0.5) - ampl / 2); /* 四捨五入とオフセットの調節 */
+				data = (short)((int)(ss + 0.5) - (int)(ampl / 2)); // 四捨五入とオフセットの調節 
 			}
-
+			
 			fwrite(&data, 2, 1, fp); /* 音データの書き出し */
 		}
 	}
@@ -149,9 +152,9 @@ void waveRW::wave_write(char *file_name) {
 		{
 			ssL = (sL[n] + 1.0) / 2.0 * ampl;
 
-			if (ssL > ampl -1.0)
+			if (ssL > ampl - 1.0)
 			{
-				ssL = ampl -1.0; /* クリッピング */
+				ssL = ampl - 1.0; /* クリッピング */
 			}
 			else if (ssL < 0.0)
 			{
@@ -159,7 +162,7 @@ void waveRW::wave_write(char *file_name) {
 			}
 
 			if (bits_per_sample == 8) {
-				data = (short)((int)(ssL + 0.5)); 
+				data = (short)((int)(ssL + 0.5));
 
 			}
 			else {
@@ -170,9 +173,9 @@ void waveRW::wave_write(char *file_name) {
 
 			ssR = (sR[n] + 1.0) / 2.0 * ampl;
 
-			if (ssR > ampl-1.0)
+			if (ssR > ampl - 1.0)
 			{
-				ssR = ampl-1; /* クリッピング */
+				ssR = ampl - 1; /* クリッピング */
 			}
 			else if (ssR < 0.0)
 			{
@@ -242,7 +245,18 @@ void waveRW::setBlockSize(short s) { block_size = s; }
 void waveRW::setBitsPerSample(short s) { bits_per_sample = s; }
 void waveRW::setDataChunkID(char* c) { strcpy_s(data_chunk_ID, 4, c); }
 void waveRW::setDataChunkSize(long l) { data_chunk_size = l; }
-void waveRW::setData(double* d) { delete[] s; s = new double[sizeof(d) / sizeof(double)]; memcpy(s, d, sizeof(d)); }
-void waveRW::setDataL(double* d) { delete[] sL; sL = new double[sizeof(d) / sizeof(double)]; memcpy(sL, d, sizeof(d)); }
-void waveRW::setDataR(double* d) { delete[] sR; sR = new double[sizeof(d) / sizeof(double)]; memcpy(sR, d, sizeof(d)); }
+void waveRW::setData(double d[]) { 
+	delete[] s; s = new double[length];
+	for (int i = 0; i < length; i++) {
+		s[i] = d[i];
+	}
+}
+void waveRW::setDataL(double* d) { 
+	delete[] sL; sL = new double[length]; 
+	for (int i = 0; i < length; i++) sL[i] = d[i];
+}
+void waveRW::setDataR(double* d) {
+	delete[] sR; sR = new double[length]; 
+	for (int i = 0; i < length; i++) sR[i] = d[i];
+}
 void waveRW::setLength(long l) { length = l; }
