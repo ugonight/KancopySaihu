@@ -5,9 +5,29 @@
 #include "record.h"
 
 KancopySaihu::KancopySaihu(QWidget *parent)
-	: QMainWindow(parent)
+	: QMainWindow(parent), mRecordWindow(0)
 {
 	ui.setupUi(this);
+
+	// 項目の追加
+	ui.comboBoxQuantize->addItems(tr("2,3,4,6,8,12,16,24,32,48,64").split(","));
+	ui.comboBoxQuantize->setCurrentIndex(4);
+	QString pitch[] = { "C","C#","D","D#","E","F","F#","G","G#","A","A#","B" };
+	for (int i = 1; i <= 7; i++) {					// C1～B7
+		for (int j = 0; j < 12; j++) {
+			ui.comboBoxRangeL->addItem(pitch[j] + QString::number(i));
+			ui.comboBoxRangeH->addItem(pitch[j] + QString::number(i));
+		}
+	}
+	ui.comboBoxRangeL->setCurrentIndex(12);			// C2
+	ui.comboBoxRangeH->setCurrentIndex(12 * 5 - 1);	// B5
+}
+
+void KancopySaihu::setFileName(QString str) {
+	ui.lineFileName->setText(str);
+}
+void KancopySaihu::setTempo(double tempo) {
+	ui.labelTempo->setText(QString::number(tempo));
 }
 
 void KancopySaihu::fileReference() {
@@ -28,6 +48,12 @@ void KancopySaihu::fileReference() {
 }
 
 void KancopySaihu::showRecord() {
-	mRecordWindow = new Record();
-	mRecordWindow->show();
+	if (!mRecordWindow) {
+		mRecordWindow = new Record();
+		mRecordWindow->show();
+		mRecordWindow->setParent(this);
+	}else
+	if (mRecordWindow->isHidden()) {
+		mRecordWindow->show();
+	}
 }

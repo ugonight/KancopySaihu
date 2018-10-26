@@ -20,37 +20,22 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
-    <Filter Include="Source">
-      <UniqueIdentifier>{40746ce5-3662-4a5e-a78e-fa7500ecf7f6}</UniqueIdentifier>
+    <Filter Include="window">
+      <UniqueIdentifier>{6678cfc1-b145-4b93-a9da-47169cd53d23}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\window">
-      <UniqueIdentifier>{2aaaa411-bd3c-48fe-9b93-72f54fff5463}</UniqueIdentifier>
+    <Filter Include="source">
+      <UniqueIdentifier>{797d40e3-19ac-4609-a745-43a6f22e9bad}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Control.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="KancopySaihu.cpp">
-      <Filter>Source\window</Filter>
-    </ClCompile>
-    <ClCompile Include="record.cpp">
-      <Filter>Source\window</Filter>
-    </ClCompile>
-    <ClCompile Include="wave.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="KancopySaihu.h">
-      <Filter>Source\window</Filter>
-    </QtMoc>
-    <QtMoc Include="record.h">
-      <Filter>Source\window</Filter>
-    </QtMoc>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="KancopySaihu.ui">
@@ -66,14 +51,45 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Control.h">
-      <Filter>Source</Filter>
+    <QtMoc Include="record.h">
+      <Filter>window</Filter>
+    </QtMoc>
+    <QtMoc Include="KancopySaihu.h">
+      <Filter>window</Filter>
+    </QtMoc>
+    <QtMoc Include="JuliusT.h">
+      <Filter>source</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="KancopySaihu.cpp">
+      <Filter>window</Filter>
+    </ClCompile>
+    <ClCompile Include="record.cpp">
+      <Filter>window</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Control.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="wave.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="JuliusT.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="define.h">
+      <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="wave.h">
-      <Filter>Source</Filter>
+      <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="define.h">
-      <Filter>Source</Filter>
+    <ClInclude Include="Control.h">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

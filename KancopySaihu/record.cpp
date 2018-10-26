@@ -1,14 +1,16 @@
 ﻿#pragma execution_character_set("utf-8")
 
 #include "record.h"
+#include "KancopySaihu.h"
 #include "define.h"
 #include "wave.h"
+#include "JuliusT.h"
 
 #include <QDir>
 #include <QtWidgets>
 
-std::vector<float> Record::mRecData;
-std::vector<float> Record::mWaveData;
+std::vector<double> Record::mRecData;
+std::vector<Record::dWave> Record::mWaveData;
 bool Record::mRecNow = false;
 
 Record::Record(QWidget *parent)
@@ -70,6 +72,25 @@ Record::Record(QWidget *parent)
 	auto timer = new QTimer(this);
 	connect(timer, SIGNAL(timeout()), this, SLOT(update()));
 	timer->start(1000 / 30);	// 30fps
+
+	// ステータスバー
+	// mStatusBar = new QStatusBar(this);
+
+	// Julius
+	QMessageBox msgBox(this);
+	msgBox.setWindowTitle("juliusを起動しています…");
+	msgBox.setStandardButtons(NULL);
+	msgBox.show();
+	mJuliusT = new JuliusT(this);
+	auto thread = new QThread();
+	mJuliusT->moveToThread(thread);	
+	thread->start();
+	mJuliusT->init();
+	QMetaObject::invokeMethod(mJuliusT, "startRecog"); // mJuliusT->startRecog();
+	msgBox.close();
+
+	// 認識リスト
+	mWordData.push_back("");
 }
 
 Record::~Record()
@@ -82,7 +103,14 @@ Record::~Record()
 	fftw_destroy_plan(mPlan);
 	fftw_free(mData);
 	fftw_free(mOut);
+	// Julius解放
+	delete mJuliusT;
 }
+
+void Record::setParent(QWidget *parent) {
+	mParent = parent;
+}
+
 
 void Record::paintEvent(QPaintEvent *) {
 	int w = ui.openGLWidget->width(), h = ui.openGLWidget->height();
@@ -92,13 +120,16 @@ void Record::paintEvent(QPaintEvent *) {
 	// painter.setRenderHint(QPainter::Antialiasing, true);//アンチエイリアスセット
 	painter.setPen(QPen(Qt::white));
 	painter.setBrush(QBrush(Qt::black));
+	//painter.setFont(QFont("ＭＳ ゴシック", 9));
+
 	painter.eraseRect(0, 0, w, h);
 	painter.drawRect(0, 0, w, h);
-
 	switch (mDispMode)
 	{
 	case 0:	// スペクトログラム
-		{	float *amplitude = new float[FRAMES_PER_BUFFER];
+		{	
+			painter.setPen((mRecNow) ? QColor(Qt::red) : QColor(Qt::white));
+			float *amplitude = new float[FRAMES_PER_BUFFER];
 			double f;
 			int x = 0, x_ = 0;
 
@@ -127,16 +158,38 @@ void Record::paintEvent(QPaintEvent *) {
 		{
 			double x=0.0;
 			for (auto d : mWaveData) {
-				painter.drawLine(x, h / 2, x, h / 2 - d * (h / 2));
+				painter.setPen((d.rec) ? QColor(Qt::red) : QColor(Qt::white));
+				painter.drawLine(x, h / 2, x, h / 2 - d.data * (h / 2));
 				x += ((double)w / (double)mWaveData.size());
 				if (x > w)break;
+			}
+		}
+		break;
+	case 2:	// 認識結果
+		{		
+			getWord();	// 認識結果取得
+			int y=0;
+			if (mWordData.size() * 10 < h) {
+				for (auto d : mWordData) {
+					painter.drawText(0, y, d);
+					y += 10;
+				}
+			}
+			else {
+				y = h - 10;
+				auto rv = mWordData;
+				std::reverse(rv.begin(), rv.end());
+				for (auto d : rv) {	//逆順
+					if (y < 0)break;
+					painter.drawText(0, y, d);
+					y -= 10;
+				}
 			}
 		}
 		break;
 	default:
 		break;
 	}
-
 
 }
 
@@ -159,7 +212,7 @@ void Record::fileReference() {
 
 void Record::changeDispMode() {
 	mDispMode++;
-	mDispMode %= 2;
+	mDispMode %= 3;
 }
 
 void Record::rec() {
@@ -188,6 +241,10 @@ void Record::rec() {
 		delete waverw;
 		
 		mRecData.clear();
+		((KancopySaihu*)mParent)->setFileName(ui.lineFileName->text().toLocal8Bit().constData());
+		this->close();
+		QString str = "録音が完了しました。\n" + ui.lineFileName->text();
+		QMessageBox::information(this, "", str);
 	}
 	else {
 		// 録音開始
@@ -220,7 +277,7 @@ int Record::dsp(const void *inputBuffer, //入力
 		data[i][0] = *in++;
 		data[i][1] = 0;
 
-		mWaveData.push_back(data[i][0]); 
+		mWaveData.push_back(dWave{ data[i][0] , mRecNow });
 		if (mRecNow) 
 			mRecData.push_back(data[i][0]);
 	}
@@ -228,4 +285,13 @@ int Record::dsp(const void *inputBuffer, //入力
 	memcpy((fftw_complex*)userData, data, sizeof(fftw_complex) * FRAMES_PER_BUFFER);
 
 	return 0;
+}
+
+void Record::getWord() {
+	QString word;
+	// qRegisterMetaType<std::string>("std::string");
+	QMetaObject::invokeMethod(mJuliusT, "getResult", Qt::DirectConnection, Q_RETURN_ARG(QString, word)); // mJuliusT->getResult();
+	if (mWordData.at(mWordData.size() - 1) != word) {
+		mWordData.push_back(word);
+	}
 }

@@ -12,6 +12,9 @@ class KancopySaihu : public QMainWindow
 public:
 	KancopySaihu(QWidget *parent = Q_NULLPTR);
 
+	void setFileName(QString str);
+	void setTempo(double tempo);
+
 private:
 	Ui::KancopySaihuClass ui;
 	

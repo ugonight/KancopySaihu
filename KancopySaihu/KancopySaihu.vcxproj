@@ -53,7 +53,7 @@
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;C:\Users\ugonight\Documents\boost_1_68_0\x64\include\boost-1_68;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -62,15 +62,15 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;C:\Users\ugonight\Documents\boost_1_68_0\x64\lib;$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>LibUTAUx64D.lib;fftw3_x64d.lib;portaudio_x64d.lib;qtmaind.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Widgetsd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libjuliusd.lib;libsentd.lib;ws2_32.lib;zlib_D.lib;fftw3_x64d.lib;PortAudio_D.lib;LibUTAUx64D.lib;qtmaind.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Widgetsd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <QtMoc>
       <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
-      <IncludePath>C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;C:\Users\ugonight\Documents\boost_1_68_0\x64\include\boost-1_68;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</IncludePath>
-      <Define>UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</Define>
+      <IncludePath>C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</IncludePath>
+      <Define>UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB</Define>
     </QtMoc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
@@ -85,7 +85,7 @@
     <ClCompile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PreprocessorDefinitions>UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;C:\Users\ugonight\Documents\boost_1_68_0\x64\include\boost-1_68;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat />
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
@@ -93,15 +93,15 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;C:\Users\ugonight\Documents\boost_1_68_0\x64\lib;$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>LibUTAUx64.lib;fftw3_x64.lib;portaudio_x64.lib;qtmain.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libjulius.lib;libsent.lib;ws2_32.lib;zlib.lib;fftw3_x64.lib;PortAudio.lib;LibUTAUx64.lib;qtmain.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <QtMoc>
       <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
-      <IncludePath>C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;C:\Users\ugonight\Documents\boost_1_68_0\x64\include\boost-1_68;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</IncludePath>
-      <Define>UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;%(PreprocessorDefinitions)</Define>
+      <IncludePath>C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName);$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;%(AdditionalIncludeDirectories)</IncludePath>
+      <Define>UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB</Define>
     </QtMoc>
     <QtUic>
       <ExecutionDescription>Uic'ing %(Identity)...</ExecutionDescription>
@@ -113,7 +113,18 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <QtUic Include="KancopySaihu.ui" />
+    <QtUic Include="record.ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="KancopySaihu.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="record.h" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="Control.cpp" />
+    <ClCompile Include="JuliusT.cpp" />
     <ClCompile Include="KancopySaihu.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="record.cpp" />
@@ -123,23 +134,12 @@
     <QtMoc Include="KancopySaihu.h" />
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="KancopySaihu.ui" />
-    <QtUic Include="record.ui" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtRcc Include="KancopySaihu.qrc" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="record.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">UNICODE;_UNICODE;WIN32;WIN64;QT_DLL;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB</Define>
-    </QtMoc>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Control.h" />
     <ClInclude Include="define.h" />
+    <QtMoc Include="JuliusT.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
+    </QtMoc>
     <ClInclude Include="wave.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
