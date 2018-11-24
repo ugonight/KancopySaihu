@@ -113,6 +113,7 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <QtUic Include="analysis.ui" />
     <QtUic Include="KancopySaihu.ui" />
     <QtUic Include="record.ui" />
   </ItemGroup>
@@ -123,6 +124,8 @@
     <QtMoc Include="record.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="analysis.cpp" />
+    <ClCompile Include="Analyze.cpp" />
     <ClCompile Include="Control.cpp" />
     <ClCompile Include="JuliusT.cpp" />
     <ClCompile Include="KancopySaihu.cpp" />
@@ -134,6 +137,14 @@
     <QtMoc Include="KancopySaihu.h" />
   </ItemGroup>
   <ItemGroup>
+    <QtMoc Include="analysis.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
+    </QtMoc>
+    <QtMoc Include="Analyze.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\ugonight\Desktop\report\sotsuken\portaudio\include;C:\Users\ugonight\Desktop\report\sotsuken\fftw;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libsent\include;C:\Users\ugonight\Desktop\report\sotsuken\julius\julius_source\libjulius\include;C:\Users\ugonight\Desktop\report\sotsuken\LibUTAU;.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets</IncludePath>
+    </QtMoc>
     <ClInclude Include="Control.h" />
     <ClInclude Include="define.h" />
     <QtMoc Include="JuliusT.h">

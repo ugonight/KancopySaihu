@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Analysis</class>
+ <widget class="QWidget" name="Analysis">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>532</width>
+    <height>388</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Analysis</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="3" column="3" colspan="3">
+    <widget class="QPushButton" name="pushCancel">
+     <property name="text">
+      <string>キャンセル(&amp;C)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QPushButton" name="pushAnalyze">
+     <property name="text">
+      <string>再解析(&amp;A)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="6">
+    <widget class="QOpenGLWidget" name="openGLWidget"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QPushButton" name="pushOK">
+     <property name="text">
+      <string>確定(&amp;R)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="5">
+    <widget class="QToolButton" name="toolScaleDown">
+     <property name="text">
+      <string>-</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QToolButton" name="toolScaleUp">
+     <property name="text">
+      <string>+</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="QScrollBar" name="horizontalScrollBar">
+     <property name="singleStep">
+      <number>5</number>
+     </property>
+     <property name="pageStep">
+      <number>50</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>pushCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>Analysis</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>415</x>
+     <y>369</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>420</x>
+     <y>383</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolScaleUp</sender>
+   <signal>clicked()</signal>
+   <receiver>Analysis</receiver>
+   <slot>scaleUp()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>488</x>
+     <y>342</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>486</x>
+     <y>328</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolScaleDown</sender>
+   <signal>clicked()</signal>
+   <receiver>Analysis</receiver>
+   <slot>scaleDown()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>512</x>
+     <y>342</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>511</x>
+     <y>331</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>horizontalScrollBar</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>Analysis</receiver>
+   <slot>sliderChange()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>314</x>
+     <y>344</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>301</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>openGLWidget</sender>
+   <signal>resized()</signal>
+   <receiver>Analysis</receiver>
+   <slot>wSizeChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>488</x>
+     <y>169</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>534</x>
+     <y>177</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>scaleUp()</slot>
+  <slot>scaleDown()</slot>
+  <slot>sliderChange()</slot>
+  <slot>wSizeChanged()</slot>
+ </slots>
+</ui>

@@ -16,9 +16,10 @@ JuliusT::JuliusT(QObject *parent) :mJconf(0), mRecog(0)
 void JuliusT::init() {
 	// ログを出力しない
 	jlog_set_output(NULL);
-	FILE *fp; fopen_s(&fp, "log.txt", "w"); jlog_set_output(fp);
+	// FILE *fp; fopen_s(&fp, "log.txt", "w"); jlog_set_output(fp);
+	const int paran = 5;
 
-	char list[5][255] = {
+	char list[paran][255] = {
 		"KankopySaihu.exe",
 		"-C",
 		"julius/main.jconf",
@@ -26,9 +27,9 @@ void JuliusT::init() {
 		"mic"
 	};
 
-	char **argv = (char **)malloc(sizeof(char) * 5);
-	for (int i = 0; i < 5; i++) {
-		*(argv + i) = (char *)malloc(sizeof(char) * (strlen(list[i]) + 1));
+	char **argv = new char*[paran];	// (char **)malloc(sizeof(char) * paran);
+	for (int i = 0; i < paran; i++) {
+		*(argv + i) = new char[strlen(list[i]) + 1]; // (char *)malloc(sizeof(char) * (strlen(list[i]) + 1));
 		strcpy_s(argv[i], (strlen(list[i]) + 1), list[i]);
 	}
 	//strcpy_s(argv[0], 255, "KankopySaihu.exe");
@@ -60,7 +61,10 @@ void JuliusT::init() {
 
 	qDebug("Success Julius startup");
 
-	// if (argv) free(argv);
+	for (int i = 0; i < paran; i++) {
+		if (argv[i]) { delete[] argv[i]; argv[i] = 0; }
+	}
+	delete[] argv;
 }
 
 void JuliusT::init(std::string filelist) {

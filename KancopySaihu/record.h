@@ -10,6 +10,7 @@
 
 class JuliusT;
 
+// ˜^‰¹‰æ–Ê
 class Record : public QWidget
 {
 	Q_OBJECT

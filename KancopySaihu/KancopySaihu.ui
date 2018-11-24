@@ -167,8 +167,8 @@
    <slot>fileReference()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>469</x>
-     <y>192</y>
+     <x>509</x>
+     <y>88</y>
     </hint>
     <hint type="destinationlabel">
      <x>465</x>
@@ -183,8 +183,8 @@
    <slot>showRecord()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>557</x>
-     <y>193</y>
+     <x>590</x>
+     <y>88</y>
     </hint>
     <hint type="destinationlabel">
      <x>553</x>
@@ -192,9 +192,26 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>btnAnalyze</sender>
+   <signal>clicked()</signal>
+   <receiver>KancopySaihuClass</receiver>
+   <slot>showAnalysis()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>340</x>
+     <y>300</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>340</x>
+     <y>325</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>fileReference()</slot>
   <slot>showRecord()</slot>
+  <slot>showAnalysis()</slot>
  </slots>
 </ui>

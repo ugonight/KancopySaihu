@@ -44,6 +44,9 @@
     <QtUic Include="record.ui">
       <Filter>Form Files</Filter>
     </QtUic>
+    <QtUic Include="analysis.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="KancopySaihu.qrc">
@@ -58,6 +61,12 @@
       <Filter>window</Filter>
     </QtMoc>
     <QtMoc Include="JuliusT.h">
+      <Filter>source</Filter>
+    </QtMoc>
+    <QtMoc Include="analysis.h">
+      <Filter>window</Filter>
+    </QtMoc>
+    <QtMoc Include="Analyze.h">
       <Filter>source</Filter>
     </QtMoc>
   </ItemGroup>
@@ -78,6 +87,12 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="JuliusT.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="analysis.cpp">
+      <Filter>window</Filter>
+    </ClCompile>
+    <ClCompile Include="Analyze.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

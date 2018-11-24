@@ -3,9 +3,10 @@
 #include <QtWidgets>
 #include "KancopySaihu.h"
 #include "record.h"
+#include "analysis.h"
 
 KancopySaihu::KancopySaihu(QWidget *parent)
-	: QMainWindow(parent), mRecordWindow(0)
+	: QMainWindow(parent), mRecordWindow(0), mAnalysisWindow(0)
 {
 	ui.setupUi(this);
 
@@ -55,5 +56,24 @@ void KancopySaihu::showRecord() {
 	}else
 	if (mRecordWindow->isHidden()) {
 		mRecordWindow->show();
+	}
+}
+
+void KancopySaihu::showAnalysis() {
+	if (ui.lineFileName->text() == "") {
+		QMessageBox::information(this, tr(""), tr("ファイル名を入力してください。")); 
+		return;
+	}
+
+	if (!mAnalysisWindow) {
+		mAnalysisWindow = new Analysis();
+		mAnalysisWindow->analyze(ui.lineFileName->text());
+		mAnalysisWindow->show();
+		// mAnalysisWindow->setParent(this);
+	}
+	else if (mAnalysisWindow->isHidden())
+	{
+		mAnalysisWindow->analyze(ui.lineFileName->text());
+		mAnalysisWindow->show();
 	}
 }

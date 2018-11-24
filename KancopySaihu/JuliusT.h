@@ -3,6 +3,7 @@
 #include <QtCore>
 #include <string>
 
+// JuliusLib‚ğg‚¤‚½‚ß‚ÌƒNƒ‰ƒX
 class JuliusT : public QObject
 {
 	Q_OBJECT
