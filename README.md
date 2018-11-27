@@ -10,11 +10,13 @@ UTAU用プラグイン「完コピ採譜プラグイン」
 - [Qt](https://www1.qt.io/jp/) 
 - [Julius(Lib)](http://julius.osdn.jp/)
 - [LibUTAU](http://shinta.coresv.com/software_dev/libutau_jpn/) (SHINTA様)
-
+- [FFTW](http://www.fftw.org/index.html)
+- [PortAudio](http://www.portaudio.com/)
 
 
 # Setup
 <!-- セットアップ方法を書く。用意するハードウェアとソフトウェアをセットアップするためのコマンドを記載する -->
+※動作にはjuliusのモデルデータが必要になります。
 
 # Usage
 <!-- 使い方。なるべく具体的に書く。サンプルも書く -->

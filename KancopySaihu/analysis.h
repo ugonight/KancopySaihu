@@ -31,6 +31,10 @@ private:
 	float **mFFTWData;
 	int mFFTnum, mFFTsize;
 
+	QPixmap mWavePix, mSpectPix;
+
+	void createPixmap();
+
 private slots:
 	void scaleUp();
 	void scaleDown();
