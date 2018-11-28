@@ -4,6 +4,7 @@
 #include "ui_analysis.h"
 
 class Analyze;
+class KancopySaihu;
 
 // âêÕåãâ âÊñ 
 class Analysis : public QWidget
@@ -15,6 +16,7 @@ public:
 	~Analysis();
 
 	void analyze(QString filename);
+	void setMain(KancopySaihu *parent);
 
 protected:
 	void paintEvent(QPaintEvent *);
@@ -25,13 +27,15 @@ private:
 	double mScaleX;	// â°ÇÃèké⁄ÅB1/xÇ≈ï\Ç∑ÅB
 
 	Analyze *mAnalyze;
+	KancopySaihu *mParent;
 	QString mFileName;
 	double *mWaveData;
 	long int mWaveLength;
 	float **mFFTWData;
 	int mFFTnum, mFFTsize;
 
-	QPixmap mWavePix, mSpectPix;
+	// QPixmap mWavePix, mSpectPix;
+	std::vector<QPixmap> mWavePix, mSpectPix, mPitchPix;
 
 	void createPixmap();
 

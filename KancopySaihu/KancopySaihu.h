@@ -17,6 +17,10 @@ public:
 	void setFileName(QString str);
 	void setTempo(double tempo);
 
+	int getRangeL();
+	int getRangeH();
+
+
 private:
 	Ui::KancopySaihuClass ui;
 	

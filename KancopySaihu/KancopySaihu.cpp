@@ -31,6 +31,11 @@ void KancopySaihu::setTempo(double tempo) {
 	ui.labelTempo->setText(QString::number(tempo));
 }
 
+
+int KancopySaihu::getRangeL() { return ui.comboBoxRangeL->currentIndex(); }
+int KancopySaihu::getRangeH() { return ui.comboBoxRangeH->currentIndex(); }
+
+
 void KancopySaihu::fileReference() {
 	QString selFilter = tr("音声ファイル(*.wav)");
 	QString fileName = QFileDialog::getOpenFileName(
@@ -67,9 +72,9 @@ void KancopySaihu::showAnalysis() {
 
 	if (!mAnalysisWindow) {
 		mAnalysisWindow = new Analysis();
+		mAnalysisWindow->setMain(this);
 		mAnalysisWindow->analyze(ui.lineFileName->text());
 		mAnalysisWindow->show();
-		// mAnalysisWindow->setParent(this);
 	}
 	else if (mAnalysisWindow->isHidden())
 	{

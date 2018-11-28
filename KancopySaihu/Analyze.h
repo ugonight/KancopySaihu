@@ -1,32 +1,40 @@
-#pragma once
+ï»¿#pragma once
 
 #include <QObject>
 #include <fftw3.h>
 
-// ‰¹º‰ğÍ–{‘Ì‚ÌƒNƒ‰ƒX
+#include <qpixmap.h>
+#include "KancopySaihu.h"
+
+// éŸ³å£°è§£ææœ¬ä½“ã®ã‚¯ãƒ©ã‚¹
 
 class waveRW;
+// class KancopySaihu;
 
 class Analyze : public QObject
 {
 	Q_OBJECT
 
 public:
-	Analyze(QObject *parent);
+	Analyze(QObject *parent = 0);
 	~Analyze();
 
 	void init(QString filename);
+	void setMain(KancopySaihu *k);
 	double* getData();
 	long int getSampleLength();
-	float** getFFTWResult(int *i = 0, int *j = 0);	// FFTW‚ÌŒ‹‰Ê ˆø”‚ÉƒAƒhƒŒƒX‚ğ“n‚·‚Æ“ñŸŒ³”z—ñ‚Ì“Yš([i][j])‚ğ•Ô‚·
+	float** getFFTWResult(int *i = 0, int *j = 0);	// FFTWã®çµæœ å¼•æ•°ã«ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’æ¸¡ã™ã¨äºŒæ¬¡å…ƒé…åˆ—ã®æ·»å­—([i][j])ã‚’è¿”ã™
+	void createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QPixmap> *spect, std::vector<QPixmap> *pitch);
+
 private:
-	const int fftsize = 1024;	// ƒoƒbƒtƒ@ƒTƒCƒY
-	const float dt = 0.001;		// 1ms•b
+	static const int fftsize;	// ãƒãƒƒãƒ•ã‚¡ã‚µã‚¤ã‚º
+	static const float dt;		// fftã‚’è¡Œã†é–“éš”ï¼ˆæ™‚é–“ï¼‰
 
 	waveRW *mWaveRW;
+	KancopySaihu *mMain;
 
-	fftw_complex *mFFTW_In;	// ‰¹ºƒf[ƒ^
-	fftw_complex *mFFTW_Out;		// FFTWo—Í
-	fftw_plan mFFTW_Plan;		// FFTWƒvƒ‰ƒ“
-	float **mFFTW_Result;	// ‰ğÍŒ‹‰ÊiU•j
+	fftw_complex *mFFTW_In;	// éŸ³å£°ãƒ‡ãƒ¼ã‚¿
+	fftw_complex *mFFTW_Out;		// FFTWå‡ºåŠ›
+	fftw_plan mFFTW_Plan;		// FFTWãƒ—ãƒ©ãƒ³
+	float **mFFTW_Result;	// è§£æçµæœï¼ˆæŒ¯å¹…ï¼‰
 };
