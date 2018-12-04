@@ -6,12 +6,17 @@
 #include "KancopySaihu.h"
 
 #include "qpainter.h"
+#include "qthread.h"
+#include <qdebug.h>
 
-const int Analyze::fftsize = 1024;	// バッファサイズ
+#include<fstream>
+
+
+const int Analyze::fftsize = 2048;	// バッファサイズ
 const float Analyze::dt = 0.001;		// 1ms秒
 
 Analyze::Analyze(QObject *parent)
-	: QObject(parent), mWaveRW(0)
+	: QObject(parent), mWaveRW(0), mStatus(STATUS_NONE), mStatusMsg("")
 {
 	// FFTW
 	// const int fftsize = FRAMES_PER_BUFFER;
@@ -30,11 +35,16 @@ Analyze::~Analyze()
 }
 
 void Analyze::init(QString filename) {
+	mStatusMsg = "初期化処理開始";
+
+	qDebug() << QThread::currentThreadId();
+
 	// wav読み込み
 	mWaveRW = new waveRW();
 	mWaveRW->wave_read(filename.toStdString().c_str());
 	// qDebug("%d", mWaveRW->getSamplesPerSec());
 
+	//std::ofstream ofs("fftw.txt");
 
 	// FFTW
 	{	
@@ -54,11 +64,13 @@ void Analyze::init(QString filename) {
 			*(mFFTW_Result + i) = new float[fftsize];
 		}
 
+		double window;
 		for (int j = 0; j < ms; j++) {
 			// 入力データ作成
 			for (int i = 0; i < fftsize; i++) {
-				if ((int)(j*(Fs*0.001)) + i < mWaveRW->getLength())
-					mFFTW_In[i][0] = mWaveRW->getData()[(int)(j*(Fs*0.001)) + i];
+				window = (0.5 - 0.5 * cos(2 * pi * (((j*(Fs*dt)) + i) / fftsize)));	// 窓関数
+				if ((int)(j*(Fs*dt)) + i < mWaveRW->getLength())
+					mFFTW_In[i][0] = mWaveRW->getData()[(int)(j*(Fs*dt)) + i] * window;
 				else
 					mFFTW_In[i][0] = 0;
 				mFFTW_In[i][1] = 0.0;
@@ -66,12 +78,16 @@ void Analyze::init(QString filename) {
 			// FFTW実行
 			fftw_execute(mFFTW_Plan);
 			// 結果代入
-
 			for (int i = 0; i < fftsize; i++) {
-				mFFTW_Result[j][i] = sqrt(mFFTW_Out[i][0] * mFFTW_Out[i][0] + mFFTW_Out[i][1] * mFFTW_Out[i][1]) / sqrt(2.0);
+				mFFTW_Out[i][0] /= fftsize;	mFFTW_Out[i][1] /= fftsize;	// 正規化
+				 mFFTW_Result[j][i] = sqrt(mFFTW_Out[i][0] * mFFTW_Out[i][0] + mFFTW_Out[i][1] * mFFTW_Out[i][1]);
+				// if (j == 5000) ofs << "in:" << mFFTW_In[i][0] << "\t\tout:" << mFFTW_Result[j][i] << std::endl;
 			}
 		}
 	}
+
+	mStatus = STATUS_FINISH_INIT;
+	mStatusMsg = "初期化処理完了";
 }
 
 void Analyze::setMain(KancopySaihu *k) {
@@ -93,11 +109,21 @@ float** Analyze::getFFTWResult(int *i, int *j) {
 	return mFFTW_Result;
 }
 
+AStatus Analyze::getStatus() {
+	return mStatus;
+}
+
+QString Analyze::getStatusMsg() {
+	return mStatusMsg;
+}
+
 void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QPixmap> *spect, std::vector<QPixmap> *pitch) {
 	double length = mWaveRW->getLength(), w, h = 500.0;
 	double *wavedata = mWaveRW->getData();
 	int fftnum = mWaveRW->getLength() / (Fs * dt);
 	int count = 0, tsize = 0;
+	mStatus = STATUS_PROCESS_CREATEPIX;
+	mStatusMsg = "描画処理開始";
 	
 	const int maxSize = 30000;	// Pixmapの上限値
 
@@ -126,13 +152,23 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 
 		// wave波形
 		double x = 0.0;
+		// double maxW = 0.0;	// 音声ファイルでの最大振幅
 		for (int i = tsize; i < w + tsize; i++) {
 			painter.drawLine(x, h / 2.0, x, h / 2.0 - wavedata[i] * (h / 2.0));
 			x += 1.0 / scale;
+
+			// if (wavedata[i] > maxW) maxW = wavedata[i];
+			mStatusMsg = QString("wave波形描画: %1 / %2").arg(i).arg(w + tsize);
 		}
 		painter.end();
+		wave->push_back(pix1);
 
 
+		const double freqL = 32.703 * pow(2.0, (double)mMain->getRangeL() / 12.0);
+		const double freqH = 32.703 * pow(2.0, (double)mMain->getRangeH() / 12.0);
+		const double freqD = freqH - freqL;
+		
+		
 		painter.begin(&pix2);
 		painter.setPen(QPen(Qt::white));
 		painter.setBrush(QBrush(Qt::black));
@@ -141,38 +177,67 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 
 		// スペクトログラム
 		int y, y_ = 0, dt = (mWaveRW->getLength() / fftnum), value;
+		
 		x = 0.0;
-		for (int i = tsize; i < w + tsize; i += dt) {
+		for (int i = tsize; i < w + tsize - dt; i += dt) {
 			y_ = h;
 			for (int j = 0; j < fftsize / 2; j++) {
 				y = (double)h - (double)h * ((double)j / (double)(fftsize / 2.0));
 				if (y == y_) continue; else y_ = y;
 
-				value = mFFTW_Result[i / dt][j] * 255.0;
+				value = mFFTW_Result[i / dt][j] * fftsize * 255.0;
+				if (value < 0)value = 0.0;
 				if (value > 255) value = 255;
-				painter.setPen(QPen(QColor(value, value, value)));
+				if ((Fs / fftsize) * j > freqL && (Fs / fftsize) * j < freqH)
+					painter.setPen(QPen(QColor(value, value, value)));
+				else
+					painter.setPen(QPen(QColor(value, 0, 0)));
+
 				painter.drawLine(x, y, x + (double)dt / (double)scale, y);
 			}
 			x += (double)dt / (double)scale;
+
+			mStatusMsg = QString("スペクトログラム描画: %1 / %2").arg(i).arg(w + tsize - dt);
 		}
 		painter.end();
+		spect->push_back(pix2);
 
 
 
 		painter.begin(&pix3);
 		painter.setPen(QPen(Qt::white));
 		painter.setBrush(QBrush(Qt::black));
+		painter.setFont(QFont("Arial", 20));
 		painter.eraseRect(0, 0, w, h);
 		painter.drawRect(0, 0, w, h);
 
 		// ピッチ曲線
-		const double freqL = 32.703 * pow(2.0, (double)mMain->getRangeL() / 12.0);
-		const double freqH = 32.703 * pow(2.0, (double)mMain->getRangeH() / 12.0);
-		const double freqD = freqH - freqL;
+
 
 		x = 0.0, y_ = 0.0;
 		double maxA, maxF, f;
-		for (int i = tsize; i < w + tsize; i += dt) {
+
+		// 音階の境界表示
+		const double df = pow(2.0, 1.0 / 12.0);
+		double dy;
+		for (int i = 0; i < mMain->getRangeH() - mMain->getRangeL(); i++) {
+			if ((mMain->getRangeL() + i) % 12 == 0) 
+				painter.setPen(QPen(Qt::blue, 3));	// Cは色を変える
+			else
+				painter.setPen(QPen(QColor(0, 0, 10), 3));
+			
+			dy = (h / (double)(mMain->getRangeH() - mMain->getRangeL()));
+			y = h - i * dy;
+			painter.drawLine(0, y, w, y);
+		}
+		// Cの文字を表示
+		painter.setPen(QPen(Qt::white));
+		for (int i = 0; i < mMain->getRangeH() - mMain->getRangeL(); i++)
+			if ((mMain->getRangeL() + i) % 12 == 0)
+				if (count == 0)  painter.drawText(0, h - i * (h / (double)(mMain->getRangeH() - mMain->getRangeL())), QString("C%1").arg((mMain->getRangeL() + i) / 12 + 1));
+
+
+		for (int i = tsize; i < w + tsize-dt; i += dt) {
 			// 指定された音域内で一番強い周波数を探す
 			maxA = 0.0, maxF = 0.0;
 			for (int j = 0; j < fftsize / 2; j++) {
@@ -186,20 +251,28 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 			}
 			
 			y_ = y;
-			y = h - ((maxF - freqL) / freqD) * h;
+			y = h - ((log2(maxF) -log2(freqL)) / (log2(freqH) - log2(freqL))) * h;
 			x += (double)dt / (double)scale;
+			value = maxA * fftsize * 255.0;
+			if (value > 255) value = 255;
+			painter.setPen(QPen(QColor(value, value, value),3));
 
-			painter.drawLine(x - (double)dt / (double)scale, y_, x , y);
+			painter.drawLine(x - (double)dt / (double)scale, y_, x, y);
+			// ofs << "a:" << maxA << "\t\tf:" << maxF << "\t\tx:" << x << "\t\ty:" << y << std::endl;
+			
+			mStatusMsg = QString("ピッチ曲線描画: %1 / %2").arg(i).arg(w + tsize - dt);
 		}
+
 		painter.end();
+		//pix2.toImage().save("spect.png");
+		//pix3.toImage().save("pitch.png");
 
-
-
-		wave->push_back(pix1);
-		spect->push_back(pix2);
 		pitch->push_back(pix3);
 
 		tsize += w;
 		count++;
 	} while (w == maxSize * scale);
+
+	mStatus = STATUS_FINISH_CREATEPIX;
+	mStatusMsg = "描画処理完了";
 }

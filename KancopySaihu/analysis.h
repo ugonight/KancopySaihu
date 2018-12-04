@@ -18,6 +18,9 @@ public:
 	void analyze(QString filename);
 	void setMain(KancopySaihu *parent);
 
+public slots:
+	void update();
+
 protected:
 	void paintEvent(QPaintEvent *);
 
@@ -33,6 +36,7 @@ private:
 	long int mWaveLength;
 	float **mFFTWData;
 	int mFFTnum, mFFTsize;
+	QThread *mThread;
 
 	// QPixmap mWavePix, mSpectPix;
 	std::vector<QPixmap> mWavePix, mSpectPix, mPitchPix;

@@ -11,6 +11,14 @@
 class waveRW;
 // class KancopySaihu;
 
+enum AStatus {
+	STATUS_NONE,
+	STATUS_READY,
+	STATUS_FINISH_INIT,
+	STATUS_FINISH_CREATEPIX,
+	STATUS_PROCESS_CREATEPIX
+};
+
 class Analyze : public QObject
 {
 	Q_OBJECT
@@ -19,11 +27,14 @@ public:
 	Analyze(QObject *parent = 0);
 	~Analyze();
 
+public slots:
 	void init(QString filename);
 	void setMain(KancopySaihu *k);
 	double* getData();
 	long int getSampleLength();
 	float** getFFTWResult(int *i = 0, int *j = 0);	// FFTWの結果 引数にアドレスを渡すと二次元配列の添字([i][j])を返す
+	AStatus getStatus();
+	QString getStatusMsg();
 	void createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QPixmap> *spect, std::vector<QPixmap> *pitch);
 
 private:
@@ -32,6 +43,8 @@ private:
 
 	waveRW *mWaveRW;
 	KancopySaihu *mMain;
+	AStatus mStatus;
+	QString mStatusMsg;
 
 	fftw_complex *mFFTW_In;	// 音声データ
 	fftw_complex *mFFTW_Out;		// FFTW出力

@@ -6,6 +6,9 @@
 
 #include<qpainter.h>
 #include<qtimer.h>
+#include<qthread.h>
+#include <qdebug.h>
+
 
 Analysis::Analysis(QWidget *parent)
 	: QWidget(parent), mAnalyze(0),mWaveData(0),mScaleX(10), mFFTWData(0)
@@ -13,20 +16,61 @@ Analysis::Analysis(QWidget *parent)
 	ui.setupUi(this);
 
 	mAnalyze = new Analyze(this);
+	mThread = new QThread;
+	mAnalyze->setParent(NULL);
+	mAnalyze->moveToThread(mThread);
+	mThread->start();
 
 	// タイマー
 	auto timer = new QTimer(this);
 	connect(timer, SIGNAL(timeout()), this, SLOT(update()));
-	timer->start(1000 /*/ 30*/);	// 30fps
+	timer->start(1000 / 30);	// 30fps
 }
 
 Analysis::~Analysis()
 {
 	delete mAnalyze;
+	mThread->quit();
+	mThread->wait();
 }
 
 void Analysis::setMain(KancopySaihu *parent) {
 	mParent = parent;
+}
+
+void Analysis::update() {
+	AStatus status;
+	QMetaObject::invokeMethod(mAnalyze, "getStatus", Qt::DirectConnection, Q_RETURN_ARG(AStatus, status));	// status = mAnalyze->getStatus();
+
+	switch (status)
+	{
+	case STATUS_NONE:
+		break;
+	case STATUS_READY:
+		break;
+	case STATUS_FINISH_INIT:
+		QMetaObject::invokeMethod(mAnalyze, "getData", Qt::DirectConnection, Q_RETURN_ARG(double*, mWaveData));	// mWaveData = mAnalyze->getData();
+		QMetaObject::invokeMethod(mAnalyze, "getSampleLength", Qt::DirectConnection, Q_RETURN_ARG(long int, mWaveLength));	// mWaveLength = mAnalyze->getSampleLength();
+		QMetaObject::invokeMethod(mAnalyze, "getFFTWResult", Qt::DirectConnection, Q_RETURN_ARG(float**, mFFTWData), Q_ARG(int*, &mFFTnum), Q_ARG(int*, &mFFTsize));	// mFFTWData = mAnalyze->getFFTWResult(&mFFTnum, &mFFTsize);
+
+		createPixmap();	// 画像データ生成
+
+		break;
+	case STATUS_FINISH_CREATEPIX:
+		wSizeChanged();	// スクロールバーの初期化
+
+		break;
+	default:
+		break;
+	}
+
+	// ステータス文字列取得
+	QString msg = "";
+	QMetaObject::invokeMethod(mAnalyze, "getStatusMsg", Qt::DirectConnection, Q_RETURN_ARG(QString, msg));	// msg = mAnalyze->getStatusMsg();
+	msg = QString("ステータス:%1").arg(msg);
+	if (ui.labelStatus->text() != msg)
+		ui.labelStatus->setText(msg);
+
 }
 
 void Analysis::paintEvent(QPaintEvent *) {
@@ -74,17 +118,19 @@ void Analysis::paintEvent(QPaintEvent *) {
 }
 
 void Analysis::analyze(QString filename) {
-	mAnalyze->init(filename);
-	mAnalyze->setMain(mParent);
-	mWaveData = mAnalyze->getData();
-	mWaveLength = mAnalyze->getSampleLength();
-	mFFTWData = mAnalyze->getFFTWResult(&mFFTnum, &mFFTsize);
 
-	createPixmap();	// 画像データ生成
-	wSizeChanged();	// スクロールバーの初期化
+	qDebug() << QThread::currentThreadId();
+	QMetaObject::invokeMethod(mAnalyze, "init", Qt::QueuedConnection, Q_ARG(QString,filename));	// mAnalyze->init(filename);
+	QMetaObject::invokeMethod(mAnalyze, "setMain", Qt::QueuedConnection, Q_ARG(KancopySaihu*, mParent));	// mAnalyze->setMain(mParent);
+	//mWaveData = mAnalyze->getData();
+	//mWaveLength = mAnalyze->getSampleLength();
+	//mFFTWData = mAnalyze->getFFTWResult(&mFFTnum, &mFFTsize);
+
+	//createPixmap();	// 画像データ生成
+	//wSizeChanged();	// スクロールバーの初期化
 }
 
-void Analysis::scaleUp() { if (mScaleX > 0) mScaleX -= 10;  createPixmap(); wSizeChanged(); paintEvent(NULL); }
+void Analysis::scaleUp() { if (mScaleX > 0) mScaleX -= 10; if (mScaleX == 0) mScaleX = 1; createPixmap(); wSizeChanged(); paintEvent(NULL); }
 void Analysis::scaleDown() { mScaleX += 10; createPixmap(); wSizeChanged(); paintEvent(NULL); }
 void Analysis::sliderChange() {  paintEvent(NULL); }
 void Analysis::wSizeChanged() { 
@@ -113,75 +159,6 @@ void Analysis::createPixmap() {
 	mSpectPix.clear();
 	mPitchPix.clear();
 
-	mAnalyze->createPixmap(mScaleX, &mWavePix, &mSpectPix, &mPitchPix);
-
-	//double w = mWaveLength, h = 500.0;
-
-	//// Pixmapの作成
-	//QPixmap pix1(w / mScaleX, h), pix2(w / mScaleX, h);
-
-	//// ペンの準備
-	//QPainter painter;
-	//painter.begin(&pix1);
-	//painter.setPen(QPen(Qt::white));
-	//painter.setBrush(QBrush(Qt::black));
-
-	//// キャンバスの初期化
-	//painter.eraseRect(0, 0, w, h);
-	//painter.drawRect(0, 0, w, h);
-
-	//// wave波形
-	//double x = 0.0;
-	//for (int i = 0; i < w; i++) {
-	//	painter.drawLine(x, h / 2.0, x, h / 2.0 - mWaveData[i] * (h / 2.0));
-	//	x += 1.0 / mScaleX;
-	//}
-	//painter.end();
-	//
-
-	//painter.begin(&pix2);
-	//painter.setPen(QPen(Qt::white));
-	//painter.setBrush(QBrush(Qt::black));
-	//painter.eraseRect(0, 0, w, h);
-	//painter.drawRect(0, 0, w, h);
-
-	//// スペクトログラム
-	//int y, dt = (mWaveLength / mFFTnum);
-	//x = 0.0;
-	//for (int i = 0; i < w; i += dt) {
-	//	for (int j = 0; j < mFFTsize / 2; j++) {
-	//		y = (double)h - (double)h * ((double)j / (double)(mFFTsize / 2.0));
-
-	//		int value = mFFTWData[i / dt][j] * 255.0;
-	//		if (value > 255) value = 255;
-	//		painter.setPen(QPen(QColor(value, value, value)));
-	//		painter.drawPoint(x, y);
-	//	}
-	//	x+= dt / mScaleX;
-	//}
-	//painter.end();
-
-
-	//mWavePix = pix1;
-	//mSpectPix = pix2;
-
-	// 画像出力
-
-	//const QImage img = pix1.toImage();//QGraphicsPixmapItemの関数でQPixmapにアクセスして、QPixmapを QImageに変換
-	//const QImage img2 = pix2.toImage();//QGraphicsPixmapItemの関数でQPixmapにアクセスして、QPixmapを QImageに変換
-	//QImage image;//テンポラリ
-
-	//if (img.format() != QImage::Format_RGB32) {//RGB32フォーマットかを確認した上で必要ならデータ変換する。
-	//	image = img.convertToFormat(QImage::Format_RGB32);
-	//}
-	//else
-	//	image = img;
-	//image.save("wave.png", 0, -1);
-
-	//if (img2.format() != QImage::Format_RGB32) {//RGB32フォーマットかを確認した上で必要ならデータ変換する。
-	//	image = img2.convertToFormat(QImage::Format_RGB32);
-	//}
-	//else
-	//	image = img2;
-	//image.save("spect.png", 0, -1);
+	qRegisterMetaType<std::vector<QPixmap>*>("std::vector<QPixmap>*");
+	QMetaObject::invokeMethod(mAnalyze, "createPixmap", Qt::QueuedConnection, Q_ARG(int, mScaleX),Q_ARG(std::vector<QPixmap>*,&mWavePix), Q_ARG(std::vector<QPixmap>*, &mSpectPix), Q_ARG(std::vector<QPixmap>*, &mPitchPix)); // mAnalyze->createPixmap(mScaleX, &mWavePix, &mSpectPix, &mPitchPix);
 }

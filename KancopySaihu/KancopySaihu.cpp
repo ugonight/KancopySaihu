@@ -5,6 +5,7 @@
 #include "record.h"
 #include "analysis.h"
 
+
 KancopySaihu::KancopySaihu(QWidget *parent)
 	: QMainWindow(parent), mRecordWindow(0), mAnalysisWindow(0)
 {
