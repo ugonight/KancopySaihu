@@ -37,6 +37,7 @@ private:
 	float **mFFTWData;
 	int mFFTnum, mFFTsize;
 	QThread *mThread;
+	int mScaleChangeTime;
 
 	// QPixmap mWavePix, mSpectPix;
 	std::vector<QPixmap> mWavePix, mSpectPix, mPitchPix;
@@ -48,4 +49,5 @@ private slots:
 	void scaleDown();
 	void sliderChange();
 	void wSizeChanged();
+	void reAnalyze();
 };

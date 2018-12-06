@@ -90,8 +90,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>415</x>
-     <y>369</y>
+     <x>522</x>
+     <y>362</y>
     </hint>
     <hint type="destinationlabel">
      <x>420</x>
@@ -106,8 +106,8 @@
    <slot>scaleUp()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>488</x>
-     <y>342</y>
+     <x>495</x>
+     <y>333</y>
     </hint>
     <hint type="destinationlabel">
      <x>486</x>
@@ -122,8 +122,8 @@
    <slot>scaleDown()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>512</x>
-     <y>342</y>
+     <x>522</x>
+     <y>333</y>
     </hint>
     <hint type="destinationlabel">
      <x>511</x>
@@ -138,8 +138,8 @@
    <slot>sliderChange()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>314</x>
-     <y>344</y>
+     <x>323</x>
+     <y>332</y>
     </hint>
     <hint type="destinationlabel">
      <x>301</x>
@@ -163,11 +163,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushAnalyze</sender>
+   <signal>clicked()</signal>
+   <receiver>Analysis</receiver>
+   <slot>reAnalyze()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>179</x>
+     <y>349</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>180</x>
+     <y>367</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>scaleUp()</slot>
   <slot>scaleDown()</slot>
   <slot>sliderChange()</slot>
   <slot>wSizeChanged()</slot>
+  <slot>reAnalyze()</slot>
  </slots>
 </ui>

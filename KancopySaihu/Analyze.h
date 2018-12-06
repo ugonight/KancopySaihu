@@ -15,6 +15,7 @@ enum AStatus {
 	STATUS_NONE,
 	STATUS_READY,
 	STATUS_FINISH_INIT,
+	STATUS_PROCESS_INIT,
 	STATUS_FINISH_CREATEPIX,
 	STATUS_PROCESS_CREATEPIX
 };
@@ -50,4 +51,5 @@ private:
 	fftw_complex *mFFTW_Out;		// FFTW出力
 	fftw_plan mFFTW_Plan;		// FFTWプラン
 	float **mFFTW_Result;	// 解析結果（振幅）
+	float *mFFTW_Pitch;	// 基本周波数
 };

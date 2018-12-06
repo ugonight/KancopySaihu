@@ -11,7 +11,7 @@
 
 
 Analysis::Analysis(QWidget *parent)
-	: QWidget(parent), mAnalyze(0),mWaveData(0),mScaleX(10), mFFTWData(0)
+	: QWidget(parent), mAnalyze(0),mWaveData(0),mScaleX(50), mFFTWData(0), mScaleChangeTime(-1)
 {
 	ui.setupUi(this);
 
@@ -48,6 +48,11 @@ void Analysis::update() {
 		break;
 	case STATUS_READY:
 		break;
+	case STATUS_PROCESS_INIT:
+	case STATUS_PROCESS_CREATEPIX:
+		ui.toolScaleUp->setEnabled(false);
+		ui.toolScaleDown->setEnabled(false);
+		break;
 	case STATUS_FINISH_INIT:
 		QMetaObject::invokeMethod(mAnalyze, "getData", Qt::DirectConnection, Q_RETURN_ARG(double*, mWaveData));	// mWaveData = mAnalyze->getData();
 		QMetaObject::invokeMethod(mAnalyze, "getSampleLength", Qt::DirectConnection, Q_RETURN_ARG(long int, mWaveLength));	// mWaveLength = mAnalyze->getSampleLength();
@@ -58,16 +63,27 @@ void Analysis::update() {
 		break;
 	case STATUS_FINISH_CREATEPIX:
 		wSizeChanged();	// スクロールバーの初期化
+		ui.toolScaleUp->setEnabled(true);
+		ui.toolScaleDown->setEnabled(true);
 
 		break;
 	default:
 		break;
 	}
 
+
+	// スケールチェンジ
+	if (mScaleChangeTime == 0) {
+		createPixmap(); wSizeChanged(); paintEvent(NULL);
+		mScaleChangeTime = -1;
+	}
+	if (mScaleChangeTime > 0) { mScaleChangeTime--; return; }
+
+
 	// ステータス文字列取得
 	QString msg = "";
 	QMetaObject::invokeMethod(mAnalyze, "getStatusMsg", Qt::DirectConnection, Q_RETURN_ARG(QString, msg));	// msg = mAnalyze->getStatusMsg();
-	msg = QString("ステータス:%1").arg(msg);
+	if (msg.length() > 0) msg = QString("ステータス:%1").arg(msg);
 	if (ui.labelStatus->text() != msg)
 		ui.labelStatus->setText(msg);
 
@@ -120,8 +136,9 @@ void Analysis::paintEvent(QPaintEvent *) {
 void Analysis::analyze(QString filename) {
 
 	qDebug() << QThread::currentThreadId();
-	QMetaObject::invokeMethod(mAnalyze, "init", Qt::QueuedConnection, Q_ARG(QString,filename));	// mAnalyze->init(filename);
+	mFileName = filename;
 	QMetaObject::invokeMethod(mAnalyze, "setMain", Qt::QueuedConnection, Q_ARG(KancopySaihu*, mParent));	// mAnalyze->setMain(mParent);
+	QMetaObject::invokeMethod(mAnalyze, "init", Qt::QueuedConnection, Q_ARG(QString,filename));	// mAnalyze->init(filename);
 	//mWaveData = mAnalyze->getData();
 	//mWaveLength = mAnalyze->getSampleLength();
 	//mFFTWData = mAnalyze->getFFTWResult(&mFFTnum, &mFFTsize);
@@ -130,8 +147,19 @@ void Analysis::analyze(QString filename) {
 	//wSizeChanged();	// スクロールバーの初期化
 }
 
-void Analysis::scaleUp() { if (mScaleX > 0) mScaleX -= 10; if (mScaleX == 0) mScaleX = 1; createPixmap(); wSizeChanged(); paintEvent(NULL); }
-void Analysis::scaleDown() { mScaleX += 10; createPixmap(); wSizeChanged(); paintEvent(NULL); }
+void Analysis::scaleUp() {
+	if (mScaleX > 0) mScaleX -= 10; 
+	if (mScaleX == 0) mScaleX = 1;
+	mScaleChangeTime = 50;
+	// createPixmap(); wSizeChanged(); paintEvent(NULL);
+	ui.labelStatus->setText(QString("スケール:1/%1").arg(mScaleX));
+}
+void Analysis::scaleDown() {
+	mScaleX += 10;
+	mScaleChangeTime = 50;
+	// createPixmap(); wSizeChanged(); paintEvent(NULL); 
+	ui.labelStatus->setText(QString("スケール:1/%1").arg(mScaleX));
+}
 void Analysis::sliderChange() {  paintEvent(NULL); }
 void Analysis::wSizeChanged() { 
 	float ratio = (float)ui.horizontalScrollBar->value() / (float)ui.horizontalScrollBar->maximum();
@@ -161,4 +189,8 @@ void Analysis::createPixmap() {
 
 	qRegisterMetaType<std::vector<QPixmap>*>("std::vector<QPixmap>*");
 	QMetaObject::invokeMethod(mAnalyze, "createPixmap", Qt::QueuedConnection, Q_ARG(int, mScaleX),Q_ARG(std::vector<QPixmap>*,&mWavePix), Q_ARG(std::vector<QPixmap>*, &mSpectPix), Q_ARG(std::vector<QPixmap>*, &mPitchPix)); // mAnalyze->createPixmap(mScaleX, &mWavePix, &mSpectPix, &mPitchPix);
+}
+
+void Analysis::reAnalyze() {
+	analyze(mFileName);
 }

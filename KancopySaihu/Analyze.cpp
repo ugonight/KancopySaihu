@@ -9,11 +9,12 @@
 #include "qthread.h"
 #include <qdebug.h>
 
-#include<fstream>
+// #include<fstream>
 
 
-const int Analyze::fftsize = 2048;	// バッファサイズ
+const int Analyze::fftsize = 1024;	// バッファサイズ
 const float Analyze::dt = 0.001;		// 1ms秒
+
 
 Analyze::Analyze(QObject *parent)
 	: QObject(parent), mWaveRW(0), mStatus(STATUS_NONE), mStatusMsg("")
@@ -23,7 +24,9 @@ Analyze::Analyze(QObject *parent)
 	mFFTW_In = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * fftsize);
 	mFFTW_Out = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * fftsize);
 	mFFTW_Plan = fftw_plan_dft_1d(fftsize, mFFTW_In, mFFTW_Out, FFTW_FORWARD, FFTW_ESTIMATE);
+
 	mFFTW_Result = 0;
+	mFFTW_Pitch = 0;
 }
 
 Analyze::~Analyze()
@@ -32,10 +35,19 @@ Analyze::~Analyze()
 	fftw_free(mFFTW_In);
 	fftw_free(mFFTW_Out);
 	fftw_destroy_plan(mFFTW_Plan);
+	if (mFFTW_Result) {
+		int length = sizeof(mFFTW_Result) / fftsize;
+		for (int i = 0; i < length; i++) {
+			delete[] mFFTW_Result[i];
+		}
+		delete[] mFFTW_Result;
+	}
+	delete[] mFFTW_Pitch;
 }
 
 void Analyze::init(QString filename) {
 	mStatusMsg = "初期化処理開始";
+	mStatus = STATUS_PROCESS_INIT;
 
 	qDebug() << QThread::currentThreadId();
 
@@ -44,7 +56,9 @@ void Analyze::init(QString filename) {
 	mWaveRW->wave_read(filename.toStdString().c_str());
 	// qDebug("%d", mWaveRW->getSamplesPerSec());
 
-	//std::ofstream ofs("fftw.txt");
+	// std::ofstream ofs("fftw_pitch.txt");
+
+	const int ms = mWaveRW->getLength() / (Fs * dt);	//1ms毎に取得
 
 	// FFTW
 	{	
@@ -58,7 +72,6 @@ void Analyze::init(QString filename) {
 		}
 
 		// 結果格納領域の確保
-		const int ms = mWaveRW->getLength() / (Fs * dt);	//1ms毎に取得
 		mFFTW_Result = new float*[ms];	
 		for (int i = 0; i < ms; i++) {
 			*(mFFTW_Result + i) = new float[fftsize];
@@ -83,7 +96,68 @@ void Analyze::init(QString filename) {
 				 mFFTW_Result[j][i] = sqrt(mFFTW_Out[i][0] * mFFTW_Out[i][0] + mFFTW_Out[i][1] * mFFTW_Out[i][1]);
 				// if (j == 5000) ofs << "in:" << mFFTW_In[i][0] << "\t\tout:" << mFFTW_Result[j][i] << std::endl;
 			}
+
+			mStatusMsg = QString("FFT処理: %1 / %2").arg(j).arg(ms);
 		}
+	}
+
+
+	// ピッチ解析
+	{
+		// メモリ解放
+		if (mFFTW_Pitch) {
+			delete[] mFFTW_Pitch;
+		}
+
+		// 結果格納領域の確保
+		mFFTW_Pitch = new float[ms];
+
+
+		auto *acf = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * fftsize);
+		auto *acf_ = (fftw_complex *)fftw_malloc(sizeof(fftw_complex) * fftsize);
+		fftw_plan planb = fftw_plan_dft_1d(fftsize, acf, acf_, FFTW_BACKWARD, FFTW_ESTIMATE);
+
+		const double freqL = 32.703 * pow(2.0, (double)mMain->getRangeL() / 12.0);
+		const double freqH = 32.703 * pow(2.0, (double)mMain->getRangeH() / 12.0);
+		
+		for (int j = 0; j < ms; j++) {
+			// パワースペクトルから自己相関関数に変換
+			for (int i = 0; i < fftsize; i++) {
+				acf[i][0] = pow(mFFTW_Result[j][i], 2.0);
+				acf[i][1] = 0;
+			}
+			fftw_execute(planb);	// 逆変換
+			for (int i = 0; i < fftsize; i++) {
+				acf_[i][0] *= 2.0 / fftsize;
+				acf_[i][1] *= 2.0 / fftsize;
+			}
+			// ピークを探す
+			double max_value = DBL_MIN;
+			int max_idx = 0;
+			double dy = 0, dy_, f;
+			for (int i = 0; i < fftsize; ++i)
+			{
+				dy_ = dy;
+				dy = acf_[i][0] - acf_[i - 1][0];
+				f = (float)Fs / (float)i;
+				if (dy_ > 0 && dy <= 0 && f >= freqL && f <= freqH)
+				{
+					if (acf_[i][0] > max_value)
+					{
+						max_value = acf_[i][0];
+						max_idx = i;
+					}
+				}
+			}
+			double peakQuefrency = 1.0 / Fs * max_idx;
+			double f0 = 1.0 / peakQuefrency;
+			mFFTW_Pitch[j] = f0;
+			// qDebug() << "max_value:" << max_value << "\t\tmax_idx:" << max_idx << "\t\tpitch:" << mFFTW_Pitch[j] /*<< std::endl*/;
+			mStatusMsg = QString("ピッチ解析処理: %1 / %2").arg(j).arg(ms);
+		}
+		fftw_free(acf);
+		fftw_free(acf_);
+		fftw_destroy_plan(planb);
 	}
 
 	mStatus = STATUS_FINISH_INIT;
@@ -153,6 +227,7 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 		// wave波形
 		double x = 0.0;
 		// double maxW = 0.0;	// 音声ファイルでの最大振幅
+	
 		for (int i = tsize; i < w + tsize; i++) {
 			painter.drawLine(x, h / 2.0, x, h / 2.0 - wavedata[i] * (h / 2.0));
 			x += 1.0 / scale;
@@ -224,7 +299,7 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 			if ((mMain->getRangeL() + i) % 12 == 0) 
 				painter.setPen(QPen(Qt::blue, 3));	// Cは色を変える
 			else
-				painter.setPen(QPen(QColor(0, 0, 10), 3));
+				painter.setPen(QPen(QColor(0, 0, 50), 3));
 			
 			dy = (h / (double)(mMain->getRangeH() - mMain->getRangeL()));
 			y = h - i * dy;
@@ -239,16 +314,18 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 
 		for (int i = tsize; i < w + tsize-dt; i += dt) {
 			// 指定された音域内で一番強い周波数を探す
-			maxA = 0.0, maxF = 0.0;
-			for (int j = 0; j < fftsize / 2; j++) {
-				f = (Fs / fftsize) * j;
-				if (f >= freqL && f <= freqH) {
-					if (maxA < mFFTW_Result[i / dt][j]) {
-						maxA = mFFTW_Result[i / dt][j];
-						maxF = f;
-					}
-				}
-			}
+			//maxA = 0.0, maxF = 0.0;
+			//for (int j = 0; j < fftsize / 2; j++) {
+			//	f = (Fs / fftsize) * j;
+			//	if (f >= freqL && f <= freqH) {
+			//		if (maxA < mFFTW_Result[i / dt][j]) {
+			//			maxA = mFFTW_Result[i / dt][j];
+			//			maxF = f;
+			//		}
+			//	}
+			//}
+			maxF = mFFTW_Pitch[i / dt];
+			maxA = mFFTW_Result[i / dt][(int)(Fs / maxF)];
 			
 			y_ = y;
 			y = h - ((log2(maxF) -log2(freqL)) / (log2(freqH) - log2(freqL))) * h;

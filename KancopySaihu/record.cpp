@@ -83,6 +83,7 @@ Record::Record(QWidget *parent)
 	msgBox.show();
 	mJuliusT = new JuliusT(this);
 	auto thread = new QThread();
+	mJuliusT->setParent(NULL);
 	mJuliusT->moveToThread(thread);	
 	thread->start();
 	mJuliusT->init();
@@ -140,11 +141,12 @@ void Record::paintEvent(QPaintEvent *) {
 
 			// 描画
 			for (int i = 0, j = 0; i < FRAMES_PER_BUFFER / 2; i++) {
-				amplitude[i] = mOut[i][0] * mOut[i][0] + mOut[i][1] * mOut[i][1];
+				mOut[i][0] /= FRAMES_PER_BUFFER; mOut[i][1] /= FRAMES_PER_BUFFER;
+				amplitude[i] = (mOut[i][0] * mOut[i][0] + mOut[i][1] * mOut[i][1]) * FRAMES_PER_BUFFER;
 				f = (double)i * (Fs / FRAMES_PER_BUFFER);	// 周波数
 				x = log10(f) * w * 0.2;	// 対数グラフにする（なってない）
 				if (x != x_) {
-					painter.drawLine(x, h / 2, x, h / 2 - amplitude[i]);
+					painter.drawLine(x, h / 2, x, h / 2 - amplitude[i] * ((float)h / 2.0));
 					j++;
 
 					if (j % 10 == 0)

@@ -17,14 +17,15 @@ void JuliusT::init() {
 	// ログを出力しない
 	jlog_set_output(NULL);
 	// FILE *fp; fopen_s(&fp, "log.txt", "w"); jlog_set_output(fp);
-	const int paran = 5;
+	const int paran = 6;
 
 	char list[paran][255] = {
 		"KankopySaihu.exe",
 		"-C",
 		"julius/main.jconf",
 		"-input",
-		"mic"
+		"mic",
+		"-48"
 	};
 
 	char **argv = new char*[paran];	// (char **)malloc(sizeof(char) * paran);
