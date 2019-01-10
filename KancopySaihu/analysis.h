@@ -40,7 +40,7 @@ private:
 	int mScaleChangeTime;
 
 	// QPixmap mWavePix, mSpectPix;
-	std::vector<QPixmap> mWavePix, mSpectPix, mPitchPix;
+	std::vector<QPixmap> mWavePix, mSpectPix, mPitchPix, mMfccPix;
 
 	void createPixmap();
 

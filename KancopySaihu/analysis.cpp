@@ -15,11 +15,11 @@ Analysis::Analysis(QWidget *parent)
 {
 	ui.setupUi(this);
 
-	mAnalyze = new Analyze(this);
-	mThread = new QThread;
-	mAnalyze->setParent(NULL);
-	mAnalyze->moveToThread(mThread);
-	mThread->start();
+	//mAnalyze = new Analyze(this);
+	//mThread = new QThread;
+	//mAnalyze->setParent(NULL);
+	//mAnalyze->moveToThread(mThread);
+	//mThread->start();
 
 	// タイマー
 	auto timer = new QTimer(this);
@@ -67,6 +67,13 @@ void Analysis::update() {
 		ui.toolScaleDown->setEnabled(true);
 
 		break;
+
+	case STATUS_FINISH_JULIUS_FIRST:
+		mMfccPix.clear();
+		QMetaObject::invokeMethod(mAnalyze, "createPixmapMfcc", Qt::QueuedConnection, Q_ARG(int, mScaleX), Q_ARG(std::vector<QPixmap>*, &mMfccPix)); // mAnalyze->createPixmapMfcc(mScaleX, &mMfccPix);
+
+		break;
+
 	default:
 		break;
 	}
@@ -86,7 +93,11 @@ void Analysis::update() {
 	if (msg.length() > 0) msg = QString("ステータス:%1").arg(msg);
 	if (ui.labelStatus->text() != msg)
 		ui.labelStatus->setText(msg);
-
+	int p[2];
+	QMetaObject::invokeMethod(mAnalyze, "getStatusP", Qt::DirectConnection, Q_RETURN_ARG(int, p[0]), Q_ARG(int, 0));	// p[0] = mAnalyze->getStatusP(0);
+	QMetaObject::invokeMethod(mAnalyze, "getStatusP", Qt::DirectConnection, Q_RETURN_ARG(int, p[1]), Q_ARG(int, 1));	// p[1] = mAnalyze->getStatusP(1);
+	ui.progressBar->setMaximum(p[1]);
+	ui.progressBar->setValue(p[0]);
 }
 
 void Analysis::paintEvent(QPaintEvent *) {
@@ -107,14 +118,18 @@ void Analysis::paintEvent(QPaintEvent *) {
 	std::vector<std::vector<QPixmap>> lists;
 	lists.push_back(mWavePix);
 	lists.push_back(mSpectPix);
+	if (mMfccPix.size() > 0) lists.push_back(mMfccPix);
 	lists.push_back(mPitchPix);
 
 	for (auto list : lists) {
 		tsize = 0;
 		for (auto pix : list) {
 			auto pix_ = pix.scaledToHeight(h / 3);
+			// mfccが追加されたら
+			if (mMfccPix.size() > 0) pix_ = pix.scaledToHeight(h / 4);
 			auto rect1 = QRect(tsize, 0, pix_.width(), pix_.height());	// pixmapの領域
-			auto rect2 = QRect(scrollX, 0, w, h / 3);	// 表示領域
+			auto rect2 = QRect(scrollX, 0, w, /*h / 3*/pix_.height());	// 表示領域
+			
 
 			if (rect1.intersects(rect2)) {	// 表示領域に入っていたら
 				QPainter p(ui.openGLWidget);
@@ -123,7 +138,7 @@ void Analysis::paintEvent(QPaintEvent *) {
 				sx = (rect1.x() < rect2.x()) ? rect2.x() - rect1.x() : 0;
 				sw = rect1.intersected(rect2).width(); // (rect2.x() < rect1.right()) ? rect1.right() - rect2.x() : (rect2.right() > rect1.x()) ? rect2.right() - rect1.x() : rect1.width();
 				
-				p.drawPixmap(x, (h / 3)*count, pix_, sx, 0, sw, h / 3);
+				p.drawPixmap(x, pix_.height()*count, pix_, sx, 0, sw, pix_.height());
 				
 				p.end();
 			}
@@ -134,6 +149,15 @@ void Analysis::paintEvent(QPaintEvent *) {
 }
 
 void Analysis::analyze(QString filename) {
+	if (mAnalyze) {
+		mThread->quit();
+		delete mAnalyze; 
+	}
+	mAnalyze = new Analyze(this);
+	mThread = new QThread;
+	mAnalyze->setParent(NULL);
+	mAnalyze->moveToThread(mThread);
+	mThread->start();
 
 	qDebug() << QThread::currentThreadId();
 	mFileName = filename;
@@ -166,7 +190,12 @@ void Analysis::wSizeChanged() {
 
 	int ImageW = 0; // = mWavePix.scaledToHeight(ui.openGLWidget->height() / 2).width();
 	for (auto pix : mWavePix) {
-		ImageW += pix.scaledToHeight(ui.openGLWidget->height() / 3).width();
+		if (mMfccPix.size() > 0) {
+			ImageW += pix.scaledToHeight(ui.openGLWidget->height() / 4).width();
+		}
+		else {
+			ImageW += pix.scaledToHeight(ui.openGLWidget->height() / 3).width();
+		}
 	}
 
 	if (ImageW > ui.openGLWidget->width()) {
@@ -181,7 +210,6 @@ void Analysis::wSizeChanged() {
 	// qDebug("%d", ui.horizontalScrollBar->value());
 }	// スクロールバーの初期化
 
-
 void Analysis::createPixmap() {
 	mWavePix.clear();
 	mSpectPix.clear();
@@ -189,6 +217,11 @@ void Analysis::createPixmap() {
 
 	qRegisterMetaType<std::vector<QPixmap>*>("std::vector<QPixmap>*");
 	QMetaObject::invokeMethod(mAnalyze, "createPixmap", Qt::QueuedConnection, Q_ARG(int, mScaleX),Q_ARG(std::vector<QPixmap>*,&mWavePix), Q_ARG(std::vector<QPixmap>*, &mSpectPix), Q_ARG(std::vector<QPixmap>*, &mPitchPix)); // mAnalyze->createPixmap(mScaleX, &mWavePix, &mSpectPix, &mPitchPix);
+
+	if (mMfccPix.size() > 0) {
+		mMfccPix.clear();
+		QMetaObject::invokeMethod(mAnalyze, "createPixmapMfcc", Qt::QueuedConnection, Q_ARG(int, mScaleX), Q_ARG(std::vector<QPixmap>*, &mMfccPix)); // mAnalyze->createPixmapMfcc(mScaleX, &mMfccPix);
+	}
 }
 
 void Analysis::reAnalyze() {

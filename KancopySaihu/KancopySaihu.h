@@ -31,4 +31,5 @@ private slots:
 	void fileReference();	// ファイルを開くダイアログを開く
 	void showRecord();		// 録音画面を表示
 	void showAnalysis();	// 解析結果画面を表示
+	void aboutQt();
 };

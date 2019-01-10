@@ -6,6 +6,7 @@
 
 
 QString JuliusT::mResult = "";
+mfcc_tuple JuliusT::mMfccResult = std::make_tuple(nullptr, 0, 0);
 
 
 JuliusT::JuliusT(QObject *parent) :mJconf(0), mRecog(0)
@@ -39,7 +40,7 @@ void JuliusT::init() {
 	//strcpy_s(argv[3], 255, "-input");
 	//strcpy_s(argv[4], 255, "mic");
 
-	mJconf = j_config_load_args_new(5, argv);
+	mJconf = j_config_load_args_new(paran, argv);
 	if (mJconf == NULL) {
 		qDebug("Try '-setting' for built-in engine configuration.");
 		return;
@@ -84,6 +85,59 @@ void JuliusT::init(std::string filelist) {
 	//argv[6] = file;
 
 	//mJconf = j_config_load_args_new(7, argv);
+
+		// ログを出力しない
+	jlog_set_output(NULL);
+	// FILE *fp; fopen_s(&fp, "log.txt", "w"); jlog_set_output(fp);
+	const int paran = 8;
+
+	char list[paran][255] = {
+		"KankopySaihu.exe",
+		"-C",
+		"julius/main.jconf",
+		"-input",
+		 "rawfile",
+		"-48",
+		"-filelist",
+		""
+	};
+	strcpy_s(list[7], 255, filelist.c_str());
+
+
+	char **argv = new char*[paran];	// (char **)malloc(sizeof(char) * paran);
+	for (int i = 0; i < paran; i++) {
+		*(argv + i) = new char[strlen(list[i]) + 1]; // (char *)malloc(sizeof(char) * (strlen(list[i]) + 1));
+		strcpy_s(argv[i], (strlen(list[i]) + 1), list[i]);
+	}
+
+
+	mJconf = j_config_load_args_new(paran, argv);
+	if (mJconf == NULL) {
+		qDebug("Try '-setting' for built-in engine configuration.");
+		return;
+	}
+	mRecog = j_create_instance_from_jconf(mJconf);
+	if (mRecog == NULL) {
+		qDebug("Error in startup");
+		return;
+	}
+
+	callback_add(mRecog, CALLBACK_EVENT_SPEECH_READY, [](Recog *recog, void*) {
+		qDebug("<<< PLEASE SPEAK! >>>");
+	}, NULL);
+
+	callback_add(mRecog, CALLBACK_EVENT_SPEECH_START, [](Recog *recog, void*) {
+		qDebug("...SPEECH START...");
+	}, NULL);
+	int e = callback_add(mRecog, CALLBACK_RESULT, JuliusT::output_result, NULL);
+
+
+	qDebug("Success Julius startup");
+
+	for (int i = 0; i < paran; i++) {
+		if (argv[i]) { delete[] argv[i]; argv[i] = 0; }
+	}
+	delete[] argv;
 }
 
 JuliusT::~JuliusT()
@@ -109,6 +163,12 @@ void JuliusT::output_result(struct __Recog__ *recog, void *dummy) {
 	}
 
 	qDebug() << mResult;
+
+	// mfccの取得
+	float **mfcc = recog->lmlist->am->mfcc->param->parvec;
+	int mfcclen = recog->lmlist->am->mfcc->param->veclen;
+	int samplenum = recog->lmlist->am->mfcc->param->samplenum;
+	mMfccResult = std::make_tuple(mfcc, samplenum, mfcclen);
 }
 
 void JuliusT::startRecog() {
@@ -129,10 +189,16 @@ void JuliusT::startRecog() {
 	}
 
 	int ret = j_recognize_stream(mRecog);
-	if (ret == -1)
+	if (ret == -1) {
+		qDebug("failed: j_recognize_stream");
 		return;	/* error */
+	}
 }
 
 QString JuliusT::getResult() {
 	return mResult;
+}
+
+mfcc_tuple JuliusT::getMfccResult() {
+	return mMfccResult;
 }

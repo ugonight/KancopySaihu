@@ -3,21 +3,22 @@
 #include "Analyze.h"
 #include "wave.h"
 #include "define.h"
-#include "KancopySaihu.h"
+// #include "KancopySaihu.h"
+// #include "JuliusT.h"
 
 #include "qpainter.h"
 #include "qthread.h"
 #include <qdebug.h>
 
-// #include<fstream>
+#include<fstream>
 
 
 const int Analyze::fftsize = 1024;	// バッファサイズ
-const float Analyze::dt = 0.001;		// 1ms秒
+const float Analyze::dt = 0.01;		// 10ms秒
 
 
 Analyze::Analyze(QObject *parent)
-	: QObject(parent), mWaveRW(0), mStatus(STATUS_NONE), mStatusMsg("")
+	: QObject(parent), mWaveRW(0), mStatus(STATUS_NONE), mStatusMsg(""),mJulius(0)
 {
 	// FFTW
 	// const int fftsize = FRAMES_PER_BUFFER;
@@ -27,6 +28,13 @@ Analyze::Analyze(QObject *parent)
 
 	mFFTW_Result = 0;
 	mFFTW_Pitch = 0;
+
+	mStatusP[0] = mStatusP[1] = 0;
+
+	mMfccResult = std::make_tuple(nullptr, 0, 0);
+
+	// タイマー
+	startTimer(1000);
 }
 
 Analyze::~Analyze()
@@ -43,6 +51,12 @@ Analyze::~Analyze()
 		delete[] mFFTW_Result;
 	}
 	delete[] mFFTW_Pitch;
+
+	float** mf = std::get<0>(mMfccResult);
+	for (int i = 0; i < std::get<1>(mMfccResult); i++) {
+		if (mf[i]) { delete[] mf[i]; mf[i] = 0; }
+	}
+	delete[] mf;
 }
 
 void Analyze::init(QString filename) {
@@ -55,6 +69,22 @@ void Analyze::init(QString filename) {
 	mWaveRW = new waveRW();
 	mWaveRW->wave_read(filename.toStdString().c_str());
 	// qDebug("%d", mWaveRW->getSamplesPerSec());
+
+	// Julius起動
+	{
+		if (mJulius) delete mJulius;
+		mJulius = new JuliusT();
+		mJulius->setParent(NULL);
+		mThread = new QThread();
+		mJulius->moveToThread(mThread);
+		std::ofstream ofs("list.txt");
+		ofs << filename.toStdString();
+		ofs.close();
+		qRegisterMetaType<std::string>("std::string");
+		QMetaObject::invokeMethod(mJulius, "init", Qt::QueuedConnection, Q_ARG(std::string, "list.txt"));
+		QMetaObject::invokeMethod(mJulius, "startRecog", Qt::QueuedConnection);
+		mThread->start();
+	}
 
 	// std::ofstream ofs("fftw_pitch.txt");
 
@@ -77,6 +107,7 @@ void Analyze::init(QString filename) {
 			*(mFFTW_Result + i) = new float[fftsize];
 		}
 
+		mStatusMsg = tr("FFT処理:");
 		double window;
 		for (int j = 0; j < ms; j++) {
 			// 入力データ作成
@@ -92,12 +123,14 @@ void Analyze::init(QString filename) {
 			fftw_execute(mFFTW_Plan);
 			// 結果代入
 			for (int i = 0; i < fftsize; i++) {
-				mFFTW_Out[i][0] /= fftsize;	mFFTW_Out[i][1] /= fftsize;	// 正規化
+				mFFTW_Out[i][0] /= (fftsize / 2);	mFFTW_Out[i][1] /= (fftsize / 2);	// 正規化
 				 mFFTW_Result[j][i] = sqrt(mFFTW_Out[i][0] * mFFTW_Out[i][0] + mFFTW_Out[i][1] * mFFTW_Out[i][1]);
 				// if (j == 5000) ofs << "in:" << mFFTW_In[i][0] << "\t\tout:" << mFFTW_Result[j][i] << std::endl;
 			}
 
-			mStatusMsg = QString("FFT処理: %1 / %2").arg(j).arg(ms);
+
+			mStatusP[0] = j;
+			mStatusP[1] = ms;
 		}
 	}
 
@@ -119,6 +152,8 @@ void Analyze::init(QString filename) {
 
 		const double freqL = 32.703 * pow(2.0, (double)mMain->getRangeL() / 12.0);
 		const double freqH = 32.703 * pow(2.0, (double)mMain->getRangeH() / 12.0);
+
+		mStatusMsg = tr("ピッチ解析処理: ");
 		
 		for (int j = 0; j < ms; j++) {
 			// パワースペクトルから自己相関関数に変換
@@ -153,15 +188,53 @@ void Analyze::init(QString filename) {
 			double f0 = 1.0 / peakQuefrency;
 			mFFTW_Pitch[j] = f0;
 			// qDebug() << "max_value:" << max_value << "\t\tmax_idx:" << max_idx << "\t\tpitch:" << mFFTW_Pitch[j] /*<< std::endl*/;
-			mStatusMsg = QString("ピッチ解析処理: %1 / %2").arg(j).arg(ms);
+
+			mStatusP[0] = j;
+			mStatusP[1] = ms;
 		}
 		fftw_free(acf);
 		fftw_free(acf_);
 		fftw_destroy_plan(planb);
 	}
 
+
 	mStatus = STATUS_FINISH_INIT;
 	mStatusMsg = "初期化処理完了";
+}
+
+void Analyze::timerEvent(QTimerEvent *event) {
+	QString result;
+	QMetaObject::invokeMethod(mJulius, "getResult", Qt::DirectConnection, Q_RETURN_ARG(QString, result));	// result = mJulius->getResult();
+	if (result != "") {
+		// qDebug() << result;
+	}
+	
+	mfcc_tuple mfcc;
+	qRegisterMetaType<mfcc_tuple>("mfcc_tuple");
+	QMetaObject::invokeMethod(mJulius, "getMfccResult", Qt::DirectConnection, Q_RETURN_ARG(mfcc_tuple, mfcc));	// mfcc = mJulius->getMfccResult();
+	if (std::get<1>(mfcc) != 0 && std::get<0>(mMfccResult) == 0) {
+		//std::ofstream ofs("mfcc.txt");
+		//for (int i = 0; i < std::get<1>(mfcc); i++) {
+		//	for (int j = 0; j < std::get<2>(mfcc); j++) {
+		//		ofs << std::get<0>(mfcc)[i][j]  << ",";
+		//	}
+		//	ofs << std::endl;
+		//}
+		//ofs.close();
+
+		// 前データの解放
+		float** mf = std::get<0>(mMfccResult);
+		for (int i = 0; i < std::get<1>(mMfccResult); i++) {
+			if (mf[i]) { delete[] mf[i]; mf[i] = 0; }
+		}
+		delete[] mf;
+
+		mMfccResult = mfcc;
+
+		analyzeTiming();
+
+		mStatus = STATUS_FINISH_JULIUS_FIRST;
+	}
 }
 
 void Analyze::setMain(KancopySaihu *k) {
@@ -189,6 +262,10 @@ AStatus Analyze::getStatus() {
 
 QString Analyze::getStatusMsg() {
 	return mStatusMsg;
+}
+
+int Analyze::getStatusP(int id) {
+	return mStatusP[id];
 }
 
 void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QPixmap> *spect, std::vector<QPixmap> *pitch) {
@@ -227,13 +304,15 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 		// wave波形
 		double x = 0.0;
 		// double maxW = 0.0;	// 音声ファイルでの最大振幅
-	
+
+		mStatusMsg = tr("wave波形描画: ");
 		for (int i = tsize; i < w + tsize; i++) {
 			painter.drawLine(x, h / 2.0, x, h / 2.0 - wavedata[i] * (h / 2.0));
 			x += 1.0 / scale;
 
 			// if (wavedata[i] > maxW) maxW = wavedata[i];
-			mStatusMsg = QString("wave波形描画: %1 / %2").arg(i).arg(w + tsize);
+			mStatusP[0] = i;
+			mStatusP[1] = (int)w+tsize;
 		}
 		painter.end();
 		wave->push_back(pix1);
@@ -253,7 +332,8 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 		// スペクトログラム
 		int y, y_ = 0, dt = (mWaveRW->getLength() / fftnum), value;
 		
-		x = 0.0;
+		x = 0.0;	
+		mStatusMsg = tr("スペクトログラム描画: ");
 		for (int i = tsize; i < w + tsize - dt; i += dt) {
 			y_ = h;
 			for (int j = 0; j < fftsize / 2; j++) {
@@ -272,7 +352,9 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 			}
 			x += (double)dt / (double)scale;
 
-			mStatusMsg = QString("スペクトログラム描画: %1 / %2").arg(i).arg(w + tsize - dt);
+
+			mStatusP[0] = i;
+			mStatusP[1] = (int)w + tsize - dt;
 		}
 		painter.end();
 		spect->push_back(pix2);
@@ -311,6 +393,7 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 			if ((mMain->getRangeL() + i) % 12 == 0)
 				if (count == 0)  painter.drawText(0, h - i * (h / (double)(mMain->getRangeH() - mMain->getRangeL())), QString("C%1").arg((mMain->getRangeL() + i) / 12 + 1));
 
+		mStatusMsg = tr("ピッチ曲線描画: ");
 
 		for (int i = tsize; i < w + tsize-dt; i += dt) {
 			// 指定された音域内で一番強い周波数を探す
@@ -337,7 +420,8 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 			painter.drawLine(x - (double)dt / (double)scale, y_, x, y);
 			// ofs << "a:" << maxA << "\t\tf:" << maxF << "\t\tx:" << x << "\t\ty:" << y << std::endl;
 			
-			mStatusMsg = QString("ピッチ曲線描画: %1 / %2").arg(i).arg(w + tsize - dt);
+			mStatusP[0] = i;
+			mStatusP[1] = (int)w + tsize - dt;
 		}
 
 		painter.end();
@@ -352,4 +436,112 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 
 	mStatus = STATUS_FINISH_CREATEPIX;
 	mStatusMsg = "描画処理完了";
+	mStatusP[0] = mStatusP[1] = 0;
+}
+
+void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
+	double length = mWaveRW->getLength(), w, h = 500.0;
+	double *wavedata = mWaveRW->getData();
+	int count = 0, tsize = 0;
+
+	mStatus = STATUS_PROCESS_CREATEPIX_MFCC;
+
+	const int maxSize = 30000;	// Pixmapの上限値
+	do
+	{
+		if (length / scale > maxSize) {
+			w = maxSize * scale;
+			length -= w;
+		}
+		else {
+			w = length;
+		}
+
+		// Pixmapの作成
+		QPixmap pix1(w / scale, h);
+
+		// ペンの準備
+		QPainter painter;
+		painter.begin(&pix1);
+		painter.setPen(QPen(Qt::white));
+		painter.setBrush(QBrush(Qt::black));
+
+		// キャンバスの初期化
+		painter.eraseRect(0, 0, w, h);
+		painter.drawRect(0, 0, w, h);
+
+		// wave波形
+		double x = 0.0;
+
+		// MFCC
+		float** mfccr = std::get<0>(mMfccResult);
+		int samplenum = std::get<1>(mMfccResult);
+		int mfccnum = std::get<2>(mMfccResult);
+		int y, y_ = 0, d = (mWaveRW->getLength() / samplenum), value;
+
+		x = 0.0;
+		mStatusMsg = tr("MFCC描画: ");
+		for (int i = tsize; i < w + tsize - d; i += d) {
+			y_ = h;
+			for (int j = 0; j < mfccnum; j++) {
+				y = (double)h - (double)h * ((double)j / (double)(mfccnum));
+				if (y == y_) continue; else y_ = y;
+
+				value = (mfccr[(int)(i / d)][j] + 5.0) / 10.0  * 360.0;
+				if (value < 0)value = 0.0;
+				if (value > 360) value = 360;
+				painter.setPen(QPen(QColor::fromHsv(value, 255, 255)));
+				painter.drawLine(x, y, x + (double)d / (double)scale, y);
+
+			}
+			x += (double)d / (double)scale;
+
+			mStatusP[0] = i;
+			mStatusP[1] = (int)w + tsize - d;
+		}
+
+		// 12次元成分のグラフ
+		y = x = 0.0;
+		painter.setPen(QPen(QColor(0, 0, 0, 100), 3));
+		mStatusMsg = tr("MFCC描画(12次元): ");
+		for (int i = tsize; i < w + tsize - d; i += d) {
+			y_ = y;
+			y = (mfccr[(int)(i / d)][12] + 5.0) / 10.0  * h;
+			x += (double)d / (double)scale;
+
+			painter.drawLine(x - (double)d / (double)scale, y_, x, y);
+
+			mStatusP[0] = i;
+			mStatusP[1] = (int)w + tsize - d;
+		}
+
+
+		painter.end();
+		mfcc->push_back(pix1);
+
+		// pix1.save("mfcc.png");
+
+		tsize += w;
+		count++;
+	} while (w == maxSize * scale);
+
+	mStatus = STATUS_FINISH_CREATEPIX_MFCC;
+	mStatusMsg = "描画処理完了";
+	mStatusP[0] = mStatusP[1] = 0;
+}
+
+void Analyze::analyzeTiming() {
+	auto mfcc = std::get<0>(mMfccResult);
+	auto samplenum = std::get<1>(mMfccResult);
+	auto vecnum = std::get<2>(mMfccResult);
+	mTimingResult.clear();
+
+	// std::ofstream ofs("timing.txt");
+
+	for (int i = 1; i < samplenum; i++) {
+		mTimingResult.push_back(pow(mfcc[i - 1][12] - mfcc[i][12], 2.0));
+		// ofs << pow(mfcc[i - 1][12] - mfcc[i][12], 2.0) << std::endl;
+	}
+
+	// ofs.close();
 }

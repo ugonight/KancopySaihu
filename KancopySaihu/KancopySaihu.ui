@@ -153,7 +153,19 @@
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuAbout_Qt_Q">
+    <property name="title">
+     <string>ヘルプ(&amp;H)</string>
+    </property>
+    <addaction name="actionAbout_Qt_Q"/>
+   </widget>
+   <addaction name="menuAbout_Qt_Q"/>
   </widget>
+  <action name="actionAbout_Qt_Q">
+   <property name="text">
+    <string>About Qt(&amp;Q)</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
@@ -208,10 +220,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionAbout_Qt_Q</sender>
+   <signal>triggered()</signal>
+   <receiver>KancopySaihuClass</receiver>
+   <slot>aboutQt()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>188</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>fileReference()</slot>
   <slot>showRecord()</slot>
   <slot>showAnalysis()</slot>
+  <slot>aboutQt()</slot>
  </slots>
 </ui>

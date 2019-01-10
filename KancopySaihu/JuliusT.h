@@ -3,6 +3,9 @@
 #include <QtCore>
 #include <string>
 
+typedef std::tuple<float**, int, int> mfcc_tuple;
+
+
 // JuliusLibを使うためのクラス
 class JuliusT : public QObject
 {
@@ -25,6 +28,7 @@ public slots:
 
 	void startRecog();		// 認識開始
 	QString getResult();
+	mfcc_tuple getMfccResult();
 
 private:
 	static void output_result(struct __Recog__ *recog, void *dummy);
@@ -32,4 +36,5 @@ private:
 	struct __Jconf__ *mJconf;
 	struct __Recog__ *mRecog;
 	static QString mResult;
+	static mfcc_tuple mMfccResult;
 };

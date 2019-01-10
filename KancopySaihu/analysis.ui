@@ -14,30 +14,10 @@
    <string>Analysis</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="0">
-    <widget class="QPushButton" name="pushOK">
-     <property name="text">
-      <string>確定(&amp;R)</string>
-     </property>
-    </widget>
-   </item>
    <item row="3" column="3" colspan="3">
     <widget class="QPushButton" name="pushCancel">
      <property name="text">
       <string>キャンセル(&amp;C)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="4">
-    <widget class="QScrollBar" name="horizontalScrollBar">
-     <property name="singleStep">
-      <number>5</number>
-     </property>
-     <property name="pageStep">
-      <number>50</number>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
@@ -58,6 +38,26 @@
    <item row="0" column="0" colspan="6">
     <widget class="QOpenGLWidget" name="openGLWidget"/>
    </item>
+   <item row="3" column="0">
+    <widget class="QPushButton" name="pushOK">
+     <property name="text">
+      <string>確定(&amp;R)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="QScrollBar" name="horizontalScrollBar">
+     <property name="singleStep">
+      <number>5</number>
+     </property>
+     <property name="pageStep">
+      <number>50</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="5">
     <widget class="QToolButton" name="toolScaleDown">
      <property name="text">
@@ -65,7 +65,7 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="6">
+   <item row="5" column="0" colspan="3">
     <widget class="QLabel" name="labelStatus">
      <property name="maximumSize">
       <size>
@@ -75,6 +75,13 @@
      </property>
      <property name="text">
       <string>ステータス:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="3" colspan="3">
+    <widget class="QProgressBar" name="progressBar">
+     <property name="value">
+      <number>0</number>
      </property>
     </widget>
    </item>

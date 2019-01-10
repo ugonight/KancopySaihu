@@ -83,3 +83,7 @@ void KancopySaihu::showAnalysis() {
 		mAnalysisWindow->show();
 	}
 }
+
+void KancopySaihu::aboutQt() {
+	QApplication::aboutQt();
+}
