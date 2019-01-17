@@ -11,6 +11,7 @@
 #include <qdebug.h>
 
 #include<fstream>
+#include <memory>
 
 
 const int Analyze::fftsize = 1024;	// バッファサイズ
@@ -232,9 +233,11 @@ void Analyze::timerEvent(QTimerEvent *event) {
 		mMfccResult = mfcc;
 
 		analyzeTiming();
+		analyzeLyrics();
 
 		mStatus = STATUS_FINISH_JULIUS_FIRST;
 	}
+
 }
 
 void Analyze::setMain(KancopySaihu *k) {
@@ -490,7 +493,7 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 				value = (mfccr[(int)(i / d)][j] + 5.0) / 10.0  * 360.0;
 				if (value < 0)value = 0.0;
 				if (value > 360) value = 360;
-				painter.setPen(QPen(QColor::fromHsv(value, 255, 255)));
+				painter.setPen(QPen(QColor::fromHsv(value, 255, 255, 50)));
 				painter.drawLine(x, y, x + (double)d / (double)scale, y);
 
 			}
@@ -502,7 +505,7 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 
 		// 12次元成分のグラフ
 		y = x = 0.0;
-		painter.setPen(QPen(QColor(0, 0, 0, 100), 3));
+		painter.setPen(QPen(QColor(255, 255, 255), 3));
 		mStatusMsg = tr("MFCC描画(12次元): ");
 		for (int i = tsize; i < w + tsize - d; i += d) {
 			y_ = y;
@@ -513,6 +516,58 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 
 			mStatusP[0] = i;
 			mStatusP[1] = (int)w + tsize - d;
+		}
+
+		// 二乗和のグラフ
+		y = x = 0.0;
+		painter.setPen(QPen(QColor(255, 200, 200), 3));
+		mStatusMsg = tr("MFCC描画(二乗和): ");
+		// 二乗和の計算
+		float *sum2= new float[samplenum];	
+		float sum2max = 0;
+		for (int i = 0; i < samplenum; i++) {
+			sum2[i] = 0;
+			for (int j = 40; j < 120; j++)
+				sum2[i] += pow(mfccr[i][j], 2.0);
+			if (sum2[i] > sum2max) sum2max = sum2[i];
+		}
+
+		for (int i = tsize; i < w + tsize - d; i += d) {
+			y_ = y;
+			y = sum2[(int)(i / d)] / sum2max * h;
+			x += (double)d / (double)scale;
+
+			painter.drawLine(x - (double)d / (double)scale, y_, x, y);
+
+			mStatusP[0] = i;
+			mStatusP[1] = (int)w + tsize - d;
+		}
+
+		delete[] sum2;
+
+
+		// クオンタイズ・タイミングの位置
+		y = x = 0.0;
+		int id = 0;
+		const float dm = ((float)mWaveRW->getLength() / (float)samplenum) / (float)Fs;	//	mfccの間隔[s]
+		const float ds = 60.0 / (float)mMain->getTempo();
+		const float dq = (4.0 * ds) / (float)mMain->getQuantize();	// クオンタイズの間隔[s]
+		const int dd = (dq/dm) * ((float)mWaveRW->getLength() / (float)samplenum);	// 解析間隔
+		const int offset = mMain->getOffset()*(float)Fs;
+		for (int i = tsize; i < w + tsize; i++) {
+			x += 1.0 / (double)scale;
+
+			// クオンタイズ
+			if ((i - offset) % dd == 0) {
+				painter.setPen(QPen(QColor(100, 100, 255, 100), 5));
+				painter.drawLine(x, 0, x, h);
+			}
+			// タイミング
+			if (i == (int)mTimingResult[id]) {
+				painter.setPen(QPen(QColor(255, 255, 255), 5));
+				painter.drawLine(x, 0, x, h);
+				if (id < mTimingResult.size()-1) id++;
+			}
 		}
 
 
@@ -538,10 +593,118 @@ void Analyze::analyzeTiming() {
 
 	// std::ofstream ofs("timing.txt");
 
-	for (int i = 1; i < samplenum; i++) {
-		mTimingResult.push_back(pow(mfcc[i - 1][12] - mfcc[i][12], 2.0));
-		// ofs << pow(mfcc[i - 1][12] - mfcc[i][12], 2.0) << std::endl;
+	// 二乗和の計算
+	float *sum2 = new float[samplenum];
+	float sum2max = 0;
+	for (int i = 0; i < samplenum; i++) {
+		sum2[i] = 0;
+		for (int j = 40; j < 120; j++)
+			sum2[i] += pow(mfcc[i][j], 2.0);
+		if (sum2[i] > sum2max) sum2max = sum2[i];
+	}
+
+	const float threshold = sum2max * mMain->getThreshold() / 100.0; // 最大値の~%を閾値とする
+	const float dd = ((float)mWaveRW->getLength() / (float)samplenum);
+	const float dm = dd / (float)Fs;	//	mfccの間隔[s]
+	const float ds = 60.0 / (float)mMain->getTempo();
+	const float dq = (4.0 * ds) / (float)mMain->getQuantize();	// クオンタイズの間隔[s]
+	const float d = dq / dm;	// 解析間隔(配列)
+
+	//for (int i = d; i < samplenum; i += d) {
+	//	if (abs(sum2[i - (int)1] - sum2[i]) > threshold) {
+	//		mTimingResult.push_back(i*dd);	// 音声データのサンプリング単位でタイミングを出す
+	//		ofs << i * dd << std::endl;
+	//	}
+	//}
+	std::vector<float> cand;
+	for (int i = 0; i < samplenum; i++) {
+		if (abs(sum2[i - 1] - sum2[i]) > threshold) {
+			cand.push_back(i*dd);	// 音声データのサンプリング単位でタイミングを出す
+			// ofs << i * dd << std::endl;
+		}
+	}
+	// クオンタイズにあったものを採用
+	int offset = mMain->getOffset()*(float)Fs / dd;
+	for (int i = offset; i < samplenum; i += d) {
+		for (auto c : cand) {
+			if (abs(c/dd - i) < 5.0) {
+				mTimingResult.push_back(c);
+				break;
+			}
+		}
 	}
 
 	// ofs.close();
+
+	delete[] sum2;
+}
+
+void Analyze::analyzeLyrics() {
+	auto wavrw = new waveRW();
+	auto src = mWaveRW->getData();
+	double* dst;
+	std::vector<double> data;
+	float ti_ = 0.0;
+	int size, overlap, blank, i, id = 0;
+	if (!QDir("").exists("div")) QDir("").mkdir("div");	// 保存ディレクトリの作成
+	std::ofstream ofs("div\\list.txt");
+	overlap = (Fs / 1000) * 100;	// オーバーラップ:100ms
+	blank = (Fs / 1000) * 200;	// ブランク:200ms
+
+	// 分割wavの生成
+	for (auto ti : mTimingResult) {
+		if (ti_ < overlap) overlap = ti_;
+
+		// 前ブランク
+		for (int i = 0; i < blank; i++) data.push_back(0.0);
+
+		//size = (int)(ti - ti_) + overlap + 1;
+		//dst = new double[size];
+		// オーバーラップ
+		for (i = 0; i < overlap; i++) {
+			// dst[i] = src[(int)ti_ + i - overlap];
+			data.push_back(src[(int)ti_ + i - overlap]);
+		}
+		
+		// コピー
+		for (i = 0; i < ti - ti_; i++) {
+			// dst[i + overlap] = src[(int)ti_ + i];
+			data.push_back(src[(int)ti_ + i]);
+		}
+
+		// 後ブランク
+		for (int i = 0; i < blank; i++) data.push_back(0.0);
+
+		// 配列にする
+		size = data.size();
+		dst = new double[size];
+		for (int i = 0; i < size; i++)dst[i] = data[i];
+
+		// 保存
+		wavrw->setSamplesPerSec(Fs);
+		wavrw->setDataChunkSize(size * 2);
+		wavrw->setLength(size);
+		wavrw->setBitsPerSample(16);
+		wavrw->setBlockSize(16 / 8);
+		wavrw->setBytesPerSec(wavrw->getBlockSize() * Fs);
+		wavrw->setRiffChunkSize(36 + wavrw->getDataChunkSize());
+		wavrw->setData(dst);
+		auto path = QString::asprintf("div\\%d.wav", id).toStdString();
+		wavrw->wave_write(path.c_str());
+		ofs << QDir::currentPath().toStdString() << "\\" << path << std::endl;
+
+		ti_ = ti;
+		id++;
+		delete[] dst; 
+		data.clear();
+	}
+
+	delete wavrw;
+
+
+	// Juliusに渡す
+	qRegisterMetaType<std::string>("std::string");
+	QMetaObject::invokeMethod(mJulius, "init", Qt::QueuedConnection, Q_ARG(std::string, "div\\list.txt"));
+	QMetaObject::invokeMethod(mJulius, "startRecog", Qt::QueuedConnection);
+	QMetaObject::invokeMethod(mJulius, "setDivMode", Qt::QueuedConnection, Q_ARG(bool, true));
 }

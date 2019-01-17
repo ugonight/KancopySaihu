@@ -101,7 +101,7 @@ void waveRW::wave_read(const char *file_name) {
 void waveRW::wave_write(const char *file_name) {
 	FILE *fp;
 
-	fopen_s(&fp, file_name, "wb");
+	int e = fopen_s(&fp, file_name, "wb");
 
 	fwrite(riff_chunk_ID, 1, 4, fp);
 	fwrite(&riff_chunk_size, 4, 1, fp);
@@ -246,7 +246,8 @@ void waveRW::setBitsPerSample(short s) { bits_per_sample = s; }
 void waveRW::setDataChunkID(char* c) { strcpy_s(data_chunk_ID, 4, c); }
 void waveRW::setDataChunkSize(long l) { data_chunk_size = l; }
 void waveRW::setData(double d[]) { 
-	delete[] s; s = new double[length];
+	if (s) delete[] s;
+	s = new double[length];
 	for (int i = 0; i < length; i++) {
 		s[i] = d[i];
 	}

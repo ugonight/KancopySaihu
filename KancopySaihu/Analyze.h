@@ -66,6 +66,7 @@ private:
 	std::vector<float> mTimingResult;
 
 	void analyzeTiming();	// タイミング解析
+	void analyzeLyrics();	// 歌詞解析
 
 protected:
 	void timerEvent(QTimerEvent *event) override;

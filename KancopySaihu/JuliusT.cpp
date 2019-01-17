@@ -7,7 +7,8 @@
 
 QString JuliusT::mResult = "";
 mfcc_tuple JuliusT::mMfccResult = std::make_tuple(nullptr, 0, 0);
-
+bool JuliusT::mDivMode = false;
+int JuliusT::mDivId = 0;
 
 JuliusT::JuliusT(QObject *parent) :mJconf(0), mRecog(0)
 {
@@ -169,6 +170,8 @@ void JuliusT::output_result(struct __Recog__ *recog, void *dummy) {
 	int mfcclen = recog->lmlist->am->mfcc->param->veclen;
 	int samplenum = recog->lmlist->am->mfcc->param->samplenum;
 	mMfccResult = std::make_tuple(mfcc, samplenum, mfcclen);
+
+	if (mDivMode) mDivId++;
 }
 
 void JuliusT::startRecog() {
@@ -201,4 +204,9 @@ QString JuliusT::getResult() {
 
 mfcc_tuple JuliusT::getMfccResult() {
 	return mMfccResult;
+}
+
+void JuliusT::setDivMode(bool m) {
+	mDivMode = m;
+	mDivId = 0;
 }

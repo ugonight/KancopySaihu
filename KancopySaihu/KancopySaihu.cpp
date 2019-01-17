@@ -35,6 +35,10 @@ void KancopySaihu::setTempo(double tempo) {
 
 int KancopySaihu::getRangeL() { return ui.comboBoxRangeL->currentIndex(); }
 int KancopySaihu::getRangeH() { return ui.comboBoxRangeH->currentIndex(); }
+int KancopySaihu::getQuantize() { return ui.comboBoxQuantize->currentText().toInt(); }
+int KancopySaihu::getTempo() { return ui.labelTempo->text().toInt(); }
+double KancopySaihu::getOffset(){return ui.doubleSpinBoxOffset->value(); }
+double KancopySaihu::getThreshold() { return ui.doubleSpinBoxThreshold->value(); }
 
 
 void KancopySaihu::fileReference() {

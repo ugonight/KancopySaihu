@@ -19,7 +19,10 @@ public:
 
 	int getRangeL();
 	int getRangeH();
-
+	int getQuantize();
+	int getTempo();
+	double getOffset();
+	double getThreshold();
 
 private:
 	Ui::KancopySaihuClass ui;

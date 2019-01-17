@@ -29,6 +29,7 @@ public slots:
 	void startRecog();		// ”FŽ¯ŠJŽn
 	QString getResult();
 	mfcc_tuple getMfccResult();
+	void setDivMode(bool);
 
 private:
 	static void output_result(struct __Recog__ *recog, void *dummy);
@@ -37,4 +38,6 @@ private:
 	struct __Recog__ *mRecog;
 	static QString mResult;
 	static mfcc_tuple mMfccResult;
+	static bool mDivMode;
+	static int mDivId;
 };
