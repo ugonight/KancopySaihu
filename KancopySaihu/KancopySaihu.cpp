@@ -39,6 +39,7 @@ int KancopySaihu::getQuantize() { return ui.comboBoxQuantize->currentText().toIn
 int KancopySaihu::getTempo() { return ui.labelTempo->text().toInt(); }
 double KancopySaihu::getOffset(){return ui.doubleSpinBoxOffset->value(); }
 double KancopySaihu::getThreshold() { return ui.doubleSpinBoxThreshold->value(); }
+bool KancopySaihu::getDivMode() { return ui.checkBoxDivMode->isChecked(); }
 
 
 void KancopySaihu::fileReference() {

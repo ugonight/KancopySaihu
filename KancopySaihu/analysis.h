@@ -40,7 +40,8 @@ private:
 	int mScaleChangeTime;
 
 	// QPixmap mWavePix, mSpectPix;
-	std::vector<QPixmap> mWavePix, mSpectPix, mPitchPix, mMfccPix;
+	std::vector<QPixmap> mWavePix, mSpectPix, mPitchPix, mMfccPix/*, mLyricsPix*/;
+	std::vector<std::pair<float, QString>> mTimingLyricsList;	// タイミングと歌詞のペアのリスト
 
 	void createPixmap();
 

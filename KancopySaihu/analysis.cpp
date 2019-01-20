@@ -62,6 +62,7 @@ void Analysis::update() {
 
 		break;
 	case STATUS_FINISH_CREATEPIX:
+	case STATUS_FINISH_CREATEPIX_MFCC:
 		wSizeChanged();	// スクロールバーの初期化
 		ui.toolScaleUp->setEnabled(true);
 		ui.toolScaleDown->setEnabled(true);
@@ -74,6 +75,18 @@ void Analysis::update() {
 
 		break;
 
+	case STATUS_FINISH_LYRICS:
+	{
+		//mLyricsPix.clear();
+		//float ratio = (float)ui.openGLWidgetLyrics->height() / ((float)ui.openGLWidget->height() / 4.0);	// 上に表示されてるものとの比率
+		//QMetaObject::invokeMethod(mAnalyze, "createPixmapLyrics", Qt::QueuedConnection, Q_ARG(int, mScaleX), Q_ARG(std::vector<QPixmap>*, &mLyricsPix), Q_ARG(float, ratio)); // mAnalyze->createPixmapLyrics(mScaleX, &mLyricsPix,ratio);
+
+		typedef std::vector<std::pair<float, QString>> pair_timing_lyrics;
+		qRegisterMetaType<std::vector<std::pair<float, QString>>>("pair_timing_lyrics");
+		QMetaObject::invokeMethod(mAnalyze, "getTimingLyricsList", Qt::DirectConnection, Q_RETURN_ARG(pair_timing_lyrics, mTimingLyricsList)); // mAnalyze->createPixmapLyrics(mScaleX, &mLyricsPix,ratio);
+
+		break;
+	}
 	default:
 		break;
 	}
@@ -146,6 +159,42 @@ void Analysis::paintEvent(QPaintEvent *) {
 		}
 		count++;
 	}
+
+
+	// 歌詞
+	if (mTimingLyricsList.size() > 0) {
+		w = ui.openGLWidgetLyrics->width(), h = ui.openGLWidgetLyrics->height();
+		//// ペンの準備
+		painter.begin(ui.openGLWidgetLyrics);
+		painter.setPen(QPen(Qt::white));
+		painter.setBrush(QBrush(Qt::black));
+
+		// キャンバスの初期化
+		painter.eraseRect(0, 0, w, h);
+		painter.drawRect(0, 0, w, h);
+		painter.end();
+
+		QFont font; font.setPixelSize(h);
+		for (auto tl : mTimingLyricsList) {
+			auto posX = tl.first * tsize;
+			auto rect1 = QRect(posX, 0, h + 3, h);	// 歌詞の領域
+			auto rect2 = QRect(scrollX, 0, w, h);	// 表示領域
+
+
+			if (rect1.intersects(rect2)) {	// 表示領域に入っていたら
+				QPainter p(ui.openGLWidgetLyrics);
+
+				x = rect1.x() - rect2.x();
+				p.setPen(QPen(QColor(255, 255, 255), 5));
+				p.drawLine(x, 0, x, h);
+				p.setFont(font);
+				p.drawText(QPoint(x + 2, h), tl.second);
+
+				p.end();
+			}
+		}
+	}
+
 }
 
 void Analysis::analyze(QString filename) {
@@ -222,6 +271,11 @@ void Analysis::createPixmap() {
 		mMfccPix.clear();
 		QMetaObject::invokeMethod(mAnalyze, "createPixmapMfcc", Qt::QueuedConnection, Q_ARG(int, mScaleX), Q_ARG(std::vector<QPixmap>*, &mMfccPix)); // mAnalyze->createPixmapMfcc(mScaleX, &mMfccPix);
 	}
+	//if (mLyricsPix.size() > 0) {
+	//	mLyricsPix.clear();
+	//	float ratio = (float)ui.openGLWidgetLyrics->height() / ((float)ui.openGLWidget->height() / 4.0);	// 上に表示されてるものとの比率
+	//	QMetaObject::invokeMethod(mAnalyze, "createPixmapLyrics", Qt::QueuedConnection, Q_ARG(int, mScaleX), Q_ARG(std::vector<QPixmap>*, &mLyricsPix), Q_ARG(float, ratio)); // mAnalyze->createPixmapMfcc(mScaleX, &mMfccPix);
+	//}
 }
 
 void Analysis::reAnalyze() {

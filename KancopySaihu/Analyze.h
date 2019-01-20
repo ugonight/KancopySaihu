@@ -22,7 +22,11 @@ enum AStatus {
 	STATUS_PROCESS_CREATEPIX,
 	STATUS_FINISH_JULIUS_FIRST,
 	STATUS_FINISH_CREATEPIX_MFCC,
-	STATUS_PROCESS_CREATEPIX_MFCC
+	STATUS_PROCESS_CREATEPIX_MFCC,
+	STATUS_FINISH_LYRICS,
+	//STATUS_FINISH_CREATEPIX_LYRICS,
+	//STATUS_PROCESS_CREATEPIX_LYRICS,
+	STATUS_GET_LYRICS
 };
 
 class Analyze : public QObject
@@ -44,6 +48,9 @@ public slots:
 	int getStatusP(int id);
 	void createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QPixmap> *spect, std::vector<QPixmap> *pitch);
 	void createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc);	// mfccのみの描画
+	// void createPixmapLyrics(int scale, std::vector<QPixmap> *mfcc, float ratio);	// 歌詞のみの描画 // やっぱAnalysis側でやる
+	std::vector<std::pair<float, QString>> getTimingLyricsList();	// タイミング(全体との比)と歌詞のペアのリスト
+
 
 private:
 	static const int fftsize;	// バッファサイズ
@@ -64,6 +71,9 @@ private:
 
 	mfcc_tuple mMfccResult;
 	std::vector<float> mTimingResult;
+
+	int mDivId, mDivMax;
+	std::vector<QString> mLyricsResult;
 
 	void analyzeTiming();	// タイミング解析
 	void analyzeLyrics();	// 歌詞解析

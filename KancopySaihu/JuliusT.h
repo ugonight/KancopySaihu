@@ -30,6 +30,9 @@ public slots:
 	QString getResult();
 	mfcc_tuple getMfccResult();
 	void setDivMode(bool);
+	void setDivMax(int);
+	int getDivId();
+	std::vector<QString> getResultList();
 
 private:
 	static void output_result(struct __Recog__ *recog, void *dummy);
@@ -40,4 +43,6 @@ private:
 	static mfcc_tuple mMfccResult;
 	static bool mDivMode;
 	static int mDivId;
+	static int mDivMax;
+	static std::vector<QString> mResultList;
 };

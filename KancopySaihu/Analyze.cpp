@@ -11,7 +11,7 @@
 #include <qdebug.h>
 
 #include<fstream>
-#include <memory>
+#include <set>
 
 
 const int Analyze::fftsize = 1024;	// バッファサイズ
@@ -19,7 +19,8 @@ const float Analyze::dt = 0.01;		// 10ms秒
 
 
 Analyze::Analyze(QObject *parent)
-	: QObject(parent), mWaveRW(0), mStatus(STATUS_NONE), mStatusMsg(""),mJulius(0)
+	: QObject(parent), mWaveRW(0), mStatus(STATUS_NONE), mStatusMsg(""),mJulius(0),
+	mDivId(-1), mDivMax(0)
 {
 	// FFTW
 	// const int fftsize = FRAMES_PER_BUFFER;
@@ -204,12 +205,7 @@ void Analyze::init(QString filename) {
 }
 
 void Analyze::timerEvent(QTimerEvent *event) {
-	QString result;
-	QMetaObject::invokeMethod(mJulius, "getResult", Qt::DirectConnection, Q_RETURN_ARG(QString, result));	// result = mJulius->getResult();
-	if (result != "") {
-		// qDebug() << result;
-	}
-	
+	// MFCC取得
 	mfcc_tuple mfcc;
 	qRegisterMetaType<mfcc_tuple>("mfcc_tuple");
 	QMetaObject::invokeMethod(mJulius, "getMfccResult", Qt::DirectConnection, Q_RETURN_ARG(mfcc_tuple, mfcc));	// mfcc = mJulius->getMfccResult();
@@ -230,14 +226,89 @@ void Analyze::timerEvent(QTimerEvent *event) {
 		}
 		delete[] mf;
 
+		// コピーする
+		//mfcc_tuple temp;
+		//float** data = new float*[std::get<1>(mfcc)];
+		//for (int i = 0; i < std::get<1>(mfcc); i++) {
+		//	data[i] = new float[std::get<2>(mfcc)];
+		//	for (int j = 0; j < std::get<2>(mfcc); j++) {
+		//		data[i][j] = std::get<0>(mfcc)[i][j];
+		//	}
+		//}
+		//std::get<0>(temp) = data;
+		//std::get<1>(temp) = std::get<1>(mfcc);
+		//std::get<2>(temp) = std::get<2>(mfcc);
+
 		mMfccResult = mfcc;
 
 		analyzeTiming();
-		analyzeLyrics();
+		if (mMain->getDivMode())
+			analyzeLyrics();
 
 		mStatus = STATUS_FINISH_JULIUS_FIRST;
 	}
 
+	// 歌詞取得
+	QString result = "";
+	int divid = -1;
+	QMetaObject::invokeMethod(mJulius, "getResult", Qt::DirectConnection, Q_RETURN_ARG(QString, result));	// result = mJulius->getResult();
+	QMetaObject::invokeMethod(mJulius, "getDivId", Qt::DirectConnection, Q_RETURN_ARG(int, divid));	// divid = mJulius->getDivId();
+	if (mDivId == -2 && mLyricsResult.size() == 0) {
+		mDivId = divid;
+		// 解析完了
+		mStatus = STATUS_FINISH_LYRICS;
+		mStatusMsg = "歌詞解析完了";
+		mStatusP[0] = mStatusP[1] = 0;
+		qRegisterMetaType<std::vector<QString>>("std::vector<QString>");
+		QMetaObject::invokeMethod(mJulius, "getResultList", Qt::DirectConnection, Q_RETURN_ARG(std::vector<QString>, mLyricsResult));	// mLyricsResult = mJulius->getResultList();
+		// 最初と最後を取り除く
+		for (auto l : mLyricsResult) {
+			l.replace(0, 1, "");
+			l.chop(1);
+		}
+		// 用済みのdivフォルダを消す
+		// QDir("div").removeRecursively();
+	} else
+	if (mDivId != divid && result != "") {
+		//result.replace(0, 1, "");
+		//result.chop(1);
+		//qDebug() << result;
+		//mLyricsResult.push_back(result);
+		mDivId = divid;
+		mStatusMsg = "歌詞解析";
+		mStatusP[0] = divid; mStatusP[1] = mDivMax;
+	}
+	// 分割しない時
+	if (!mMain->getDivMode() && mStatus == STATUS_FINISH_CREATEPIX_MFCC) {
+		// 前後を削る
+		result.replace(0, 1, "");
+		result.chop(1);
+		// 最初は空白
+		mLyricsResult.push_back("");
+		
+		std::set<QString> s{ "ぁ","ぃ","ぅ","ぇ","ぉ","ゃ","ゅ","ょ" };
+		QString r;
+		for (int i = 0; i < result.length(); i++) {
+			r = result;
+			r.replace(0, i, "");
+			r.chop(result.length() - i - 1);
+			if (s.count(r)) {
+				//小文字（？）が含まれていたらリストの前のデータに加える
+				mLyricsResult.at(mLyricsResult.size() - 1) += r;
+			}
+			else {
+				mLyricsResult.push_back(r);
+			}
+		}
+		// 解析完了
+		mStatus = STATUS_FINISH_LYRICS;
+		mStatusMsg = "歌詞解析完了";
+		mStatusP[0] = mStatusP[1] = 0;
+
+		for (auto l : mLyricsResult) {
+			qDebug() << l;
+		}
+	}
 }
 
 void Analyze::setMain(KancopySaihu *k) {
@@ -558,7 +629,7 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 			x += 1.0 / (double)scale;
 
 			// クオンタイズ
-			if ((i - offset) % dd == 0) {
+			if ((i - offset) % (int)(dq*Fs)/*dd*/ == 0) {
 				painter.setPen(QPen(QColor(100, 100, 255, 100), 5));
 				painter.drawLine(x, 0, x, h);
 			}
@@ -583,6 +654,102 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 	mStatus = STATUS_FINISH_CREATEPIX_MFCC;
 	mStatusMsg = "描画処理完了";
 	mStatusP[0] = mStatusP[1] = 0;
+}
+
+//void Analyze::createPixmapLyrics(int scale, std::vector<QPixmap> *mfcc, float ratio) {
+//	double length = mWaveRW->getLength(), w, h = 25.0;
+//	double *wavedata = mWaveRW->getData();
+//	int count = 0, tsize = 0;
+//
+//	mStatus = STATUS_PROCESS_CREATEPIX_LYRICS;
+//
+//	const int maxSize = 30000;	// Pixmapの上限値
+//	do
+//	{
+//		if (length / scale * ratio> maxSize) {
+//			w = maxSize * scale * (1.0 / ratio);
+//			length -= w;
+//		}
+//		else {
+//			w = length;
+//		}
+//
+//		// Pixmapの作成
+//		QPixmap pix1(w / scale * ratio, h);
+//
+//		// ペンの準備
+//		QPainter painter;
+//		painter.begin(&pix1);
+//		painter.setPen(QPen(Qt::white));
+//		painter.setBrush(QBrush(Qt::black));
+//
+//		// キャンバスの初期化
+//		painter.eraseRect(0, 0, w, h);
+//		painter.drawRect(0, 0, w, h);
+//
+//		// wave波形
+//		double x = 0.0;
+//
+//		// MFCC
+//		float** mfccr = std::get<0>(mMfccResult);
+//		int samplenum = std::get<1>(mMfccResult);
+//		int mfccnum = std::get<2>(mMfccResult);
+//		int y, y_ = 0, d = (mWaveRW->getLength() / samplenum), value;
+//
+//		// タイミングの位置
+//		y = x = 0.0;
+//		int id = 0;
+//		const float dm = ((float)mWaveRW->getLength() / (float)samplenum) / (float)Fs;	//	mfccの間隔[s]
+//		const float ds = 60.0 / (float)mMain->getTempo();
+//		const float dq = (4.0 * ds) / (float)mMain->getQuantize();	// クオンタイズの間隔[s]
+//		const int dd = (dq / dm) * ((float)mWaveRW->getLength() / (float)samplenum);	// 解析間隔
+//		const int offset = mMain->getOffset()*(float)Fs;
+//		QFont font; font.setPixelSize(h); painter.setFont(font);
+//		for (int i = tsize; i < w + tsize; i++) {
+//			x += 1.0 / (double)scale * ratio;
+//
+//			// タイミング
+//			if (i == (int)mTimingResult[id]) {
+//				painter.setPen(QPen(QColor(255, 255, 255), 5));
+//				painter.drawLine(x, 0, x, h);
+//
+//				// 歌詞
+//				if (id + 1 < mLyricsResult.size())
+//					painter.drawText(QPoint(x + 2, h), mLyricsResult.at(id + 1));
+//
+//				if (id < mTimingResult.size() - 1) id++;
+//			}
+//		}
+//
+//
+//		painter.end();
+//		mfcc->push_back(pix1);
+//
+//		pix1.save("lyrics.png");
+//
+//		tsize += w;
+//		count++;
+//	} while (w == maxSize * scale);
+//
+//	mStatus = STATUS_FINISH_CREATEPIX_LYRICS;
+//	mStatusMsg = "描画処理完了";
+//	mStatusP[0] = mStatusP[1] = 0;
+//}
+
+std::vector<std::pair<float, QString>> Analyze::getTimingLyricsList() {
+	std::vector<std::pair<float, QString>> result;
+	double length = mWaveRW->getLength();
+	float timing;
+
+	result.push_back(std::make_pair(0.0, mLyricsResult[0]));
+
+	for (int i = 0; i < mTimingResult.size(); i++) {
+		timing = mTimingResult[i] / length;	// 全体の比で返す
+		result.push_back(std::make_pair(timing, mLyricsResult[i + 1]));
+	}
+
+	mStatus = STATUS_GET_LYRICS;
+	return result;
 }
 
 void Analyze::analyzeTiming() {
@@ -627,7 +794,7 @@ void Analyze::analyzeTiming() {
 	int offset = mMain->getOffset()*(float)Fs / dd;
 	for (int i = offset; i < samplenum; i += d) {
 		for (auto c : cand) {
-			if (abs(c/dd - i) < 5.0) {
+			if (abs(c/dd - i) < 3.0) {
 				mTimingResult.push_back(c);
 				break;
 			}
@@ -706,5 +873,8 @@ void Analyze::analyzeLyrics() {
 	qRegisterMetaType<std::string>("std::string");
 	QMetaObject::invokeMethod(mJulius, "init", Qt::QueuedConnection, Q_ARG(std::string, "div\\list.txt"));
 	QMetaObject::invokeMethod(mJulius, "startRecog", Qt::QueuedConnection);
-	QMetaObject::invokeMethod(mJulius, "setDivMode", Qt::QueuedConnection, Q_ARG(bool, true));
+	QMetaObject::invokeMethod(mJulius, "setDivMode", Qt::DirectConnection, Q_ARG(bool, true));
+	QMetaObject::invokeMethod(mJulius, "setDivMax", Qt::DirectConnection, Q_ARG(int, id+1));
+
+	mDivMax = id+1;
 }

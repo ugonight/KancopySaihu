@@ -15,27 +15,6 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QLabel" name="label">
-      <property name="text">
-       <string>音声ファイル:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="6">
-     <widget class="QPushButton" name="btnRef">
-      <property name="text">
-       <string>参照</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="7">
-     <widget class="QPushButton" name="btnRecord">
-      <property name="text">
-       <string>録音</string>
-      </property>
-     </widget>
-    </item>
     <item row="1" column="0">
      <widget class="QLabel" name="label_6">
       <property name="maximumSize">
@@ -49,55 +28,7 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="1">
-     <widget class="QLabel" name="labelTempo">
-      <property name="text">
-       <string>0</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="label_2">
-      <property name="text">
-       <string>クオンタイズ:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
-     <widget class="QLabel" name="label_3">
-      <property name="text">
-       <string>1 /</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="label_4">
-      <property name="text">
-       <string>音域:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0">
-     <widget class="QLabel" name="label_7">
-      <property name="text">
-       <string>オフセット[s]:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="0">
-     <widget class="QLabel" name="label_8">
-      <property name="text">
-       <string>閾値[%]:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1" colspan="5">
-     <widget class="QLineEdit" name="lineFileName"/>
-    </item>
-    <item row="2" column="3" colspan="3">
-     <widget class="QComboBox" name="comboBoxQuantize"/>
-    </item>
-    <item row="6" column="2" colspan="4">
+    <item row="8" column="2" colspan="4">
      <widget class="QPushButton" name="btnAnalyze">
       <property name="minimumSize">
        <size>
@@ -126,18 +57,49 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="4" colspan="2">
-     <widget class="QDoubleSpinBox" name="doubleSpinBoxOffset">
-      <property name="decimals">
-       <number>6</number>
-      </property>
-      <property name="maximum">
-       <double>30.000000000000000</double>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>クオンタイズ:</string>
       </property>
      </widget>
     </item>
-    <item row="3" column="5">
-     <widget class="QComboBox" name="comboBoxRangeH"/>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>音声ファイル:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="label_7">
+      <property name="text">
+       <string>オフセット[s]:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3" colspan="3">
+     <widget class="QComboBox" name="comboBoxQuantize"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="label_8">
+      <property name="text">
+       <string>閾値[%]:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>1 /</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" colspan="5">
+     <widget class="QLineEdit" name="lineFileName"/>
+    </item>
+    <item row="3" column="3">
+     <widget class="QComboBox" name="comboBoxRangeL"/>
     </item>
     <item row="3" column="4">
      <widget class="QLabel" name="label_5">
@@ -149,8 +111,53 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="3">
-     <widget class="QComboBox" name="comboBoxRangeL"/>
+    <item row="0" column="7">
+     <widget class="QPushButton" name="btnRecord">
+      <property name="text">
+       <string>録音</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="4" colspan="2">
+     <widget class="QDoubleSpinBox" name="doubleSpinBoxOffset">
+      <property name="decimals">
+       <number>6</number>
+      </property>
+      <property name="maximum">
+       <double>30.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="6">
+     <widget class="QPushButton" name="btnRef">
+      <property name="text">
+       <string>参照</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>音域:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLabel" name="labelTempo">
+      <property name="text">
+       <string>0</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="5">
+     <widget class="QComboBox" name="comboBoxRangeH"/>
+    </item>
+    <item row="6" column="5">
+     <widget class="QCheckBox" name="checkBoxDivMode">
+      <property name="text">
+       <string>分割歌詞解析をする</string>
+      </property>
+     </widget>
     </item>
    </layout>
    <zorder>label</zorder>
@@ -171,6 +178,7 @@
    <zorder>doubleSpinBoxOffset</zorder>
    <zorder>label_5</zorder>
    <zorder>comboBoxRangeL</zorder>
+   <zorder>checkBoxDivMode</zorder>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="statusTip">

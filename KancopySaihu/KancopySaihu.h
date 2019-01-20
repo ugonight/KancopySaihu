@@ -23,6 +23,7 @@ public:
 	int getTempo();
 	double getOffset();
 	double getThreshold();
+	bool getDivMode();
 
 private:
 	Ui::KancopySaihuClass ui;
