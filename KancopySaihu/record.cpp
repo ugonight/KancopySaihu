@@ -104,8 +104,12 @@ Record::~Record()
 	fftw_destroy_plan(mPlan);
 	fftw_free(mData);
 	fftw_free(mOut);
+	// Thread終了
+	//mJuliusT->thread()->quit();
+	//mJuliusT->thread()->wait();
+	//delete mJuliusT->thread();
 	// Julius解放
-	delete mJuliusT;
+	// delete mJuliusT;
 }
 
 void Record::setParent(QWidget *parent) {

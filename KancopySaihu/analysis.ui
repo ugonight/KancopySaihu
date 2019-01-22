@@ -19,6 +19,9 @@
    </item>
    <item row="4" column="1">
     <widget class="QPushButton" name="pushAnalyze">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="text">
       <string>再解析(&amp;A)</string>
      </property>
@@ -67,6 +70,9 @@
    </item>
    <item row="4" column="0">
     <widget class="QPushButton" name="pushOK">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="text">
       <string>確定(&amp;R)</string>
      </property>
@@ -196,6 +202,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>pushOK</sender>
+   <signal>clicked()</signal>
+   <receiver>Analysis</receiver>
+   <slot>confirm()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>64</x>
+     <y>356</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>59</x>
+     <y>369</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>scaleUp()</slot>
@@ -203,5 +225,6 @@
   <slot>sliderChange()</slot>
   <slot>wSizeChanged()</slot>
   <slot>reAnalyze()</slot>
+  <slot>confirm()</slot>
  </slots>
 </ui>

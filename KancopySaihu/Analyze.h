@@ -2,8 +2,9 @@
 
 #include <QObject>
 #include <fftw3.h>
-
+#include <UUtauData.h>
 #include <qpixmap.h>
+
 #include "KancopySaihu.h"
 #include "JuliusT.h"
 
@@ -26,8 +27,11 @@ enum AStatus {
 	STATUS_FINISH_LYRICS,
 	//STATUS_FINISH_CREATEPIX_LYRICS,
 	//STATUS_PROCESS_CREATEPIX_LYRICS,
-	STATUS_GET_LYRICS
+	STATUS_GET_LYRICS,
+	STATUS_FINISH_WRITEUTAU
 };
+
+typedef std::vector<TUtauSectionNote> utau_note_list;
 
 class Analyze : public QObject
 {
@@ -50,7 +54,8 @@ public slots:
 	void createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc);	// mfccのみの描画
 	// void createPixmapLyrics(int scale, std::vector<QPixmap> *mfcc, float ratio);	// 歌詞のみの描画 // やっぱAnalysis側でやる
 	std::vector<std::pair<float, QString>> getTimingLyricsList();	// タイミング(全体との比)と歌詞のペアのリスト
-
+	void writeUtauData();	// UTAUデータに記録する
+	utau_note_list getUtauData();
 
 private:
 	static const int fftsize;	// バッファサイズ
@@ -75,8 +80,11 @@ private:
 	int mDivId, mDivMax;
 	std::vector<QString> mLyricsResult;
 
+	utau_note_list mUtauData;
+
 	void analyzeTiming();	// タイミング解析
 	void analyzeLyrics();	// 歌詞解析
+
 
 protected:
 	void timerEvent(QTimerEvent *event) override;

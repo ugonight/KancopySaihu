@@ -3,7 +3,8 @@
 #include <QtCore>
 #include <string>
 
-typedef std::tuple<float**, int, int> mfcc_tuple;
+// typedef std::tuple<float**, int, int> mfcc_tuple;
+typedef std::tuple<std::vector<std::vector<float>>, int, int> mfcc_tuple;
 
 
 // JuliusLib‚ğg‚¤‚½‚ß‚ÌƒNƒ‰ƒX

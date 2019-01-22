@@ -12,6 +12,7 @@
 
 #include<fstream>
 #include <set>
+#include <UUtauData.h>
 
 
 const int Analyze::fftsize = 1024;	// バッファサイズ
@@ -33,7 +34,7 @@ Analyze::Analyze(QObject *parent)
 
 	mStatusP[0] = mStatusP[1] = 0;
 
-	mMfccResult = std::make_tuple(nullptr, 0, 0);
+	mMfccResult = std::make_tuple(std::vector<std::vector<float>>{0}, 0, 0);
 
 	// タイマー
 	startTimer(1000);
@@ -54,11 +55,18 @@ Analyze::~Analyze()
 	}
 	delete[] mFFTW_Pitch;
 
-	float** mf = std::get<0>(mMfccResult);
-	for (int i = 0; i < std::get<1>(mMfccResult); i++) {
-		if (mf[i]) { delete[] mf[i]; mf[i] = 0; }
-	}
-	delete[] mf;
+	//float** mf = std::get<0>(mMfccResult);
+	//for (int i = 0; i < std::get<1>(mMfccResult); i++) {
+	//	if (mf[i]) { 
+	//		delete[] mf[i]; 
+	//		// mf[i] = 0; 
+	//	}
+	//}
+	//delete[] mf;
+	//mThread->exit();
+	//mThread->wait();
+	//// delete mThread;
+	// delete mJulius;
 }
 
 void Analyze::init(QString filename) {
@@ -209,7 +217,7 @@ void Analyze::timerEvent(QTimerEvent *event) {
 	mfcc_tuple mfcc;
 	qRegisterMetaType<mfcc_tuple>("mfcc_tuple");
 	QMetaObject::invokeMethod(mJulius, "getMfccResult", Qt::DirectConnection, Q_RETURN_ARG(mfcc_tuple, mfcc));	// mfcc = mJulius->getMfccResult();
-	if (std::get<1>(mfcc) != 0 && std::get<0>(mMfccResult) == 0) {
+	if (std::get<1>(mfcc) != 0 /*&& std::get<0>(mMfccResult) == 0*/ && mStatus==STATUS_FINISH_CREATEPIX) {
 		//std::ofstream ofs("mfcc.txt");
 		//for (int i = 0; i < std::get<1>(mfcc); i++) {
 		//	for (int j = 0; j < std::get<2>(mfcc); j++) {
@@ -220,11 +228,11 @@ void Analyze::timerEvent(QTimerEvent *event) {
 		//ofs.close();
 
 		// 前データの解放
-		float** mf = std::get<0>(mMfccResult);
-		for (int i = 0; i < std::get<1>(mMfccResult); i++) {
-			if (mf[i]) { delete[] mf[i]; mf[i] = 0; }
-		}
-		delete[] mf;
+		//float** mf = std::get<0>(mMfccResult);
+		//for (int i = 0; i < std::get<1>(mMfccResult); i++) {
+		//	if (mf[i]) { delete[] mf[i]; mf[i] = 0; }
+		//}
+		//delete[] mf;
 
 		// コピーする
 		//mfcc_tuple temp;
@@ -511,6 +519,7 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 	mStatus = STATUS_FINISH_CREATEPIX;
 	mStatusMsg = "描画処理完了";
 	mStatusP[0] = mStatusP[1] = 0;
+	if (!std::get<1>(mMfccResult)) mStatusMsg += "(Juliusの解析を待機中)";
 }
 
 void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
@@ -548,7 +557,7 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 		double x = 0.0;
 
 		// MFCC
-		float** mfccr = std::get<0>(mMfccResult);
+		/*float***/auto mfccr = std::get<0>(mMfccResult);
 		int samplenum = std::get<1>(mMfccResult);
 		int mfccnum = std::get<2>(mMfccResult);
 		int y, y_ = 0, d = (mWaveRW->getLength() / samplenum), value;
@@ -557,6 +566,8 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 		mStatusMsg = tr("MFCC描画: ");
 		for (int i = tsize; i < w + tsize - d; i += d) {
 			y_ = h;
+			if (samplenum - 1 < (int)(i / d)) break;
+
 			for (int j = 0; j < mfccnum; j++) {
 				y = (double)h - (double)h * ((double)j / (double)(mfccnum));
 				if (y == y_) continue; else y_ = y;
@@ -580,6 +591,8 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 		mStatusMsg = tr("MFCC描画(12次元): ");
 		for (int i = tsize; i < w + tsize - d; i += d) {
 			y_ = y;
+			if (samplenum - 1 < (int)(i / d)) break;
+
 			y = (mfccr[(int)(i / d)][12] + 5.0) / 10.0  * h;
 			x += (double)d / (double)scale;
 
@@ -605,6 +618,8 @@ void Analyze::createPixmapMfcc(int scale, std::vector<QPixmap> *mfcc) {
 
 		for (int i = tsize; i < w + tsize - d; i += d) {
 			y_ = y;
+			if (samplenum - 1 < (int)(i / d)) break;
+
 			y = sum2[(int)(i / d)] / sum2max * h;
 			x += (double)d / (double)scale;
 
@@ -740,12 +755,18 @@ std::vector<std::pair<float, QString>> Analyze::getTimingLyricsList() {
 	std::vector<std::pair<float, QString>> result;
 	double length = mWaveRW->getLength();
 	float timing;
+	QString lyrics;
 
 	result.push_back(std::make_pair(0.0, mLyricsResult[0]));
 
 	for (int i = 0; i < mTimingResult.size(); i++) {
 		timing = mTimingResult[i] / length;	// 全体の比で返す
-		result.push_back(std::make_pair(timing, mLyricsResult[i + 1]));
+		if (mLyricsResult.size() > i + 1)
+			lyrics = mLyricsResult[i + 1];
+		else
+			lyrics = "";
+
+		result.push_back(std::make_pair(timing, lyrics));
 	}
 
 	mStatus = STATUS_GET_LYRICS;
@@ -877,4 +898,74 @@ void Analyze::analyzeLyrics() {
 	QMetaObject::invokeMethod(mJulius, "setDivMax", Qt::DirectConnection, Q_ARG(int, id+1));
 
 	mDivMax = id+1;
+}
+
+void Analyze::writeUtauData() {
+	// auto control = Control::get_instance();
+	// auto utaudata = control.getUtauData();
+	TUtauSectionNote *note;
+	float length, nlength, average, noteb, n;
+	int notenum;
+	const float beat = ((float)Fs * 60.0) / (float)mMain->getTempo();	// 一拍[サンプル数]
+	std::vector<TPointD> pitches;
+	auto timing = mTimingResult;
+	//mTimingResult.insert(mTimingResult.begin(), 0.0);
+	//mTimingResult.push_back(mWaveRW->getLength());
+	const int d = Fs * dt;	// 解析間隔
+	const int fftnum = mWaveRW->getLength() / d;	// 解析数
+
+	mStatusMsg = "UTAUデータ作成中";
+	
+	for (int i = 0; i < mTimingResult.size()-1; i++) {
+		if (mLyricsResult.size() < i) break;
+
+		// ノートの生成
+		note = new TUtauSectionNote();
+		note->SetSectionName(SECTION_NAME_INSERT);
+
+		// 歌詞
+		note->SetValue(KEY_NAME_LYRIC, mLyricsResult.at(i).toStdString());
+
+		// 長さ
+		length = timing.at(i + 1) - timing.at(i);
+		nlength = (length / beat) * 480.0;
+		note->SetValue(KEY_NAME_LENGTH, (int32)nlength);
+
+		// ピッチ
+		//	音階を出す
+		average = 0;
+		for (int j = timing.at(i); j < timing.at(i + 1); j++) {
+			if (j / d > fftnum)break;
+			average += mFFTW_Pitch[(int)(j / d)];
+		}
+		average /= length;
+		notenum = 12.0 * log2(average / 32.703); // C1から何音離れているか
+		// notenum += 24;
+		note->SetValue(KEY_NAME_NOTE_NUM, (int32)notenum + 24);
+		//	音名との差でピッチを出す
+		noteb = 32.703 * notenum * pow(2.0, 1.0 / 12.0);
+		pitches.clear();
+		for (int j = timing.at(i); j < timing.at(i + 1); j += d) {
+			if (j / d > fftnum)break;
+			n = 1200.0*log2(mFFTW_Pitch[(int)(j / d)] / noteb);
+			pitches.push_back(TPointD((j - timing.at(i)) / ((float)Fs*0.001), n));
+		}
+		note->SetCorrectedPitch(pitches);
+
+		// ノート追加
+		// utaudata->AddSectionNote(*note);
+		mUtauData.push_back(*note);
+
+		mStatusP[0] = i; mStatusP[1] = mTimingResult.size();
+	}
+
+	// control.exportUtau();
+	mStatusMsg = "UTAUデータ作成完了";
+	mStatusP[0] = mStatusP[1] = 0;
+
+	mStatus = STATUS_FINISH_WRITEUTAU;
+}
+
+utau_note_list Analyze::getUtauData() {
+	return mUtauData;
 }

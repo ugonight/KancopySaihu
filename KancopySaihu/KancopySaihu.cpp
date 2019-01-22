@@ -62,6 +62,7 @@ void KancopySaihu::fileReference() {
 void KancopySaihu::showRecord() {
 	if (!mRecordWindow) {
 		mRecordWindow = new Record();
+		mRecordWindow->setAttribute(Qt::WA_DeleteOnClose);
 		mRecordWindow->show();
 		mRecordWindow->setParent(this);
 	}else
@@ -77,10 +78,14 @@ void KancopySaihu::showAnalysis() {
 	}
 
 	if (!mAnalysisWindow) {
+		if (mRecordWindow)mRecordWindow->close();
+
 		mAnalysisWindow = new Analysis();
 		mAnalysisWindow->setMain(this);
+		mAnalysisWindow->setAttribute(Qt::WA_DeleteOnClose);
 		mAnalysisWindow->analyze(ui.lineFileName->text());
 		mAnalysisWindow->show();
+
 	}
 	else if (mAnalysisWindow->isHidden())
 	{

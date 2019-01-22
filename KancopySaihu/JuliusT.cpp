@@ -6,7 +6,7 @@
 
 
 QString JuliusT::mResult = "";
-mfcc_tuple JuliusT::mMfccResult = std::make_tuple(nullptr, 0, 0);
+mfcc_tuple JuliusT::mMfccResult = std::make_tuple(std::vector<std::vector<float>>{0}, 0, 0);
 bool JuliusT::mDivMode = false;
 int JuliusT::mDivId = -1;
 int JuliusT::mDivMax = 0;
@@ -172,16 +172,18 @@ void JuliusT::output_result(struct __Recog__ *recog, void *dummy) {
 	float **mfcc = recog->lmlist->am->mfcc->param->parvec;
 	int mfcclen = recog->lmlist->am->mfcc->param->veclen;
 	int samplenum = recog->lmlist->am->mfcc->param->samplenum;
-	//// コピーする
-	//mfcc_tuple temp;
-	//float** data = new float*[samplenum];
-	//for (int i = 0; i < samplenum; i++) {
-	//	data[i] = new float[mfcclen];
-	//	for (int j = 0; j < mfcclen; j++) {
-	//		data[i][j] = mfcc[i][j];
-	//	}
-	//}
-	mMfccResult = std::make_tuple(mfcc, samplenum, mfcclen);
+	// コピーする
+	std::vector<std::vector<float>> data;
+	std::vector<float> data_;
+	for (int i = 0; i < samplenum; i++) {
+		for (int j = 0; j < mfcclen; j++) {
+			// data[i][j] = mfcc[i][j];
+			data_.push_back(mfcc[i][j]);
+		}
+		data.push_back(data_);
+		data_.clear();
+	}
+	mMfccResult = std::make_tuple(data, samplenum, mfcclen);
 
 	if (mDivMode) {
 		if (mDivId == mDivMax) {

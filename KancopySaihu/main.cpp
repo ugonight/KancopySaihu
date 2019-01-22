@@ -7,8 +7,8 @@ int main(int argc, char *argv[])
 	QApplication a(argc, argv);
 
 	// ‰Šú‰»ˆ—
-	auto control = new Control(argc,argv);
-	control->init();
+	auto control = Control::create(); // new Control(argc,argv);
+	control.init(argc, argv);
 	
 	return a.exec();
 }

@@ -2,16 +2,19 @@
 
 #include "analysis.h"
 #include "Analyze.h"
+#include "Control.h"
 #include"KancopySaihu.h"
 
 #include<qpainter.h>
 #include<qtimer.h>
 #include<qthread.h>
 #include <qdebug.h>
+#include<qapplication.h>
+
 
 
 Analysis::Analysis(QWidget *parent)
-	: QWidget(parent), mAnalyze(0),mWaveData(0),mScaleX(50), mFFTWData(0), mScaleChangeTime(-1)
+	: QWidget(parent), mAnalyze(0),mWaveData(0),mScaleX(50), mFFTWData(0), mScaleChangeTime(-1),mCreatedPix(0)
 {
 	ui.setupUi(this);
 
@@ -30,8 +33,9 @@ Analysis::Analysis(QWidget *parent)
 Analysis::~Analysis()
 {
 	delete mAnalyze;
-	mThread->quit();
-	mThread->wait();
+	//mThread->quit();
+	//mThread->wait();
+	// delete mThread;
 }
 
 void Analysis::setMain(KancopySaihu *parent) {
@@ -62,11 +66,20 @@ void Analysis::update() {
 
 		break;
 	case STATUS_FINISH_CREATEPIX:
+		if (mCreatedPix == 0) {
+			wSizeChanged();	// スクロールバーの初期化
+			ui.toolScaleUp->setEnabled(true);
+			ui.toolScaleDown->setEnabled(true);
+			mCreatedPix++;
+		}
+		break;
 	case STATUS_FINISH_CREATEPIX_MFCC:
-		wSizeChanged();	// スクロールバーの初期化
-		ui.toolScaleUp->setEnabled(true);
-		ui.toolScaleDown->setEnabled(true);
-
+		if (mCreatedPix == 1) {
+			wSizeChanged();	// スクロールバーの初期化
+			ui.toolScaleUp->setEnabled(true);
+			ui.toolScaleDown->setEnabled(true);
+			mCreatedPix++;
+		}	
 		break;
 
 	case STATUS_FINISH_JULIUS_FIRST:
@@ -84,9 +97,27 @@ void Analysis::update() {
 		typedef std::vector<std::pair<float, QString>> pair_timing_lyrics;
 		qRegisterMetaType<std::vector<std::pair<float, QString>>>("pair_timing_lyrics");
 		QMetaObject::invokeMethod(mAnalyze, "getTimingLyricsList", Qt::DirectConnection, Q_RETURN_ARG(pair_timing_lyrics, mTimingLyricsList)); // mAnalyze->createPixmapLyrics(mScaleX, &mLyricsPix,ratio);
+		
+		ui.pushOK->setEnabled(true);
 
 		break;
 	}
+	case STATUS_FINISH_WRITEUTAU:	// UTAUデータ作成完了
+	{
+		utau_note_list result;
+		qRegisterMetaType<utau_note_list>("utau_note_list");
+		QMetaObject::invokeMethod(mAnalyze, "getUtauData", Qt::DirectConnection, Q_RETURN_ARG(utau_note_list, result)); // result = mAnalyze->getUtauData();
+
+		auto utaudata = Control::get_instance().getUtauData();
+		for (auto data : result) {
+			utaudata->AddSectionNote(data);
+		}
+		Control::get_instance().exportUtau();
+		// qApp->exit();
+		QApplication::closeAllWindows();
+		return;
+	}
+		break;
 	default:
 		break;
 	}
@@ -280,4 +311,8 @@ void Analysis::createPixmap() {
 
 void Analysis::reAnalyze() {
 	analyze(mFileName);
+}
+
+void Analysis::confirm(){
+	QMetaObject::invokeMethod(mAnalyze, "writeUtauData", Qt::QueuedConnection); // mAnalyze->writeUtauData();
 }
