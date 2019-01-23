@@ -507,6 +507,7 @@ void Analyze::createPixmap(int scale, std::vector<QPixmap> *wave, std::vector<QP
 		}
 
 		painter.end();
+		//pix1.toImage().save("wave.png");
 		//pix2.toImage().save("spect.png");
 		//pix3.toImage().save("pitch.png");
 
@@ -913,6 +914,7 @@ void Analyze::writeUtauData() {
 	//mTimingResult.push_back(mWaveRW->getLength());
 	const int d = Fs * dt;	// 解析間隔
 	const int fftnum = mWaveRW->getLength() / d;	// 解析数
+	auto codec = QTextCodec::codecForName("Shift-JIS");	// 歌詞はShift-JISに変換する
 
 	mStatusMsg = "UTAUデータ作成中";
 	
@@ -924,7 +926,7 @@ void Analyze::writeUtauData() {
 		note->SetSectionName(SECTION_NAME_INSERT);
 
 		// 歌詞
-		note->SetValue(KEY_NAME_LYRIC, mLyricsResult.at(i).toStdString());
+		note->SetValue(KEY_NAME_LYRIC, codec->fromUnicode(mLyricsResult.at(i)).toStdString());
 
 		// 長さ
 		length = timing.at(i + 1) - timing.at(i);
@@ -941,13 +943,13 @@ void Analyze::writeUtauData() {
 		average /= length;
 		notenum = 12.0 * log2(average / 32.703); // C1から何音離れているか
 		// notenum += 24;
-		note->SetValue(KEY_NAME_NOTE_NUM, (int32)notenum + 24);
+		note->SetValue(KEY_NAME_NOTE_NUM, (int32)notenum + 22);
 		//	音名との差でピッチを出す
-		noteb = 32.703 * notenum * pow(2.0, 1.0 / 12.0);
+		noteb = 32.703 * pow(pow(2.0, 1.0 / 12.0), notenum);
 		pitches.clear();
 		for (int j = timing.at(i); j < timing.at(i + 1); j += d) {
-			if (j / d > fftnum)break;
-			n = 1200.0*log2(mFFTW_Pitch[(int)(j / d)] / noteb);
+			if (j / d > fftnum) break;
+			n = 1200.0*log2(mFFTW_Pitch[(int)(j / d)] / noteb)/10.0;
 			pitches.push_back(TPointD((j - timing.at(i)) / ((float)Fs*0.001), n));
 		}
 		note->SetCorrectedPitch(pitches);

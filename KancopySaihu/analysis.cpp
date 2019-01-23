@@ -112,6 +112,7 @@ void Analysis::update() {
 		for (auto data : result) {
 			utaudata->AddSectionNote(data);
 		}
+
 		Control::get_instance().exportUtau();
 		// qApp->exit();
 		QApplication::closeAllWindows();

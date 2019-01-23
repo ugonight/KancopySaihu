@@ -56,7 +56,7 @@ void Control::init(int argc, char *argv[]) {
 	mUtauData = new TUtauData();
 	if (mUtauData->SetTo(argv[1]) != B_OK) {
 		qDebug("パイプファイルを読み込めません。");
-		qApp->exit();
+		// qApp->exit();
 		return;
 	}
 
